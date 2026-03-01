@@ -68,7 +68,7 @@ const PostCard = forwardRef<HTMLDivElement, PostCardProps>(function PostCard({ p
           <img
             src={getImageUrl(post.imageUrl)}
             alt=""
-            className="w-full h-auto object-contain"
+            className="w-full h-auto max-h-[400px] object-contain"
           />
         </div>
       )}

@@ -29,7 +29,7 @@ function DetailsModal({ post, onClose }: DetailsModalProps) {
         </button>
         <div className="flex-1 overflow-y-auto min-h-0 px-3 py-3" data-scroll-allow>
           <div
-            className="post-content font-inter text-[14px] text-[#a6a6a6] leading-[140%] text-center"
+            className="post-content font-inter text-[14px] text-[#a6a6a6] leading-[140%] text-left"
             dangerouslySetInnerHTML={{ __html: post.detailsText || t.detailsModal.text1 }}
           />
         </div>

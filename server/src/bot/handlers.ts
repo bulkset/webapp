@@ -6,6 +6,7 @@ import {
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { Buffer } from 'buffer';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
@@ -15,15 +16,17 @@ const ADMIN_IDS = (process.env.ADMIN_CHAT_IDS || '')
   .map(id => Number(id.trim()))
   .filter(Boolean);
 
+console.log('[BOT] ADMIN_IDS:', ADMIN_IDS);
+
 function isAdmin(chatId: number): boolean {
   return ADMIN_IDS.includes(chatId);
 }
 
 function escapeHtml(text: string): string {
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>');
 }
 
 /** Convert Telegram message entities to HTML.
@@ -112,7 +115,111 @@ function stripHtml(html: string): string {
   return html.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
 }
 
+// Inline keyboard helpers
+const skipKeyboard: TelegramBot.InlineKeyboardMarkup = {
+  inline_keyboard: [[{ text: '⏭ Skip', callback_data: 'skip' }]]
+};
+
+const yesNoKeyboard: TelegramBot.InlineKeyboardMarkup = {
+  inline_keyboard: [
+    [{ text: '✅ Yes', callback_data: 'yes' }],
+    [{ text: '❌ No', callback_data: 'no' }]
+  ]
+};
+
 export function registerHandlers(bot: TelegramBot) {
+  // Handle inline keyboard callbacks
+  bot.on('callback_query', (query) => {
+    const chatId = query.message?.chat.id;
+    const messageId = query.message?.message_id;
+    const data = query.data;
+    
+    if (!chatId || !messageId || !data) return;
+    
+    console.log('[BOT] Callback:', { chatId, data, step: getSession(chatId).step });
+    
+    // Answer the callback to remove loading state
+    bot.answerCallbackQuery(query.id);
+    
+    const session = getSession(chatId);
+    const text = data;
+    
+    // Handle skip
+    if (text === 'skip') {
+      switch (session.step) {
+        case 'awaiting_image':
+          session.postDraft.imageUrl = '';
+          session.step = 'awaiting_details';
+          bot.sendMessage(chatId, '📝 Send DETAILS text for the modal (or "skip"):', { reply_markup: skipKeyboard });
+          break;
+        case 'awaiting_details':
+          session.postDraft.detailsText = '';
+          session.step = 'awaiting_telegram_link';
+          bot.sendMessage(chatId, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
+          break;
+        case 'awaiting_telegram_link':
+          session.postDraft.telegramLink = '';
+          session.step = 'awaiting_whatsapp_link';
+          bot.sendMessage(chatId, '🔗 Send WHATSAPP link (or "skip"):', { reply_markup: skipKeyboard });
+          break;
+        case 'awaiting_whatsapp_link':
+          session.postDraft.whatsappLink = '';
+          session.step = 'awaiting_instagram_link';
+          bot.sendMessage(chatId, '🔗 Send INSTAGRAM link (or "skip"):', { reply_markup: skipKeyboard });
+          break;
+        case 'awaiting_instagram_link':
+          session.postDraft.instagramLink = '';
+          session.step = 'confirm_create';
+          const d = session.postDraft;
+          bot.sendMessage(chatId,
+            `📋 Post preview:\n\n` +
+            `Text: ${stripHtml(d.text || '').substring(0, 100)}\n` +
+            `Image: ${d.imageUrl ? '✅' : '❌'}\n` +
+            `Details: ${d.detailsText ? '✅' : '❌'}\n` +
+            `TG: ${d.telegramLink || '—'}\n` +
+            `WA: ${d.whatsappLink || '—'}\n` +
+            `IG: ${d.instagramLink || '—'}\n\n` +
+            `Send YES to publish, or /cancel.`,
+            { reply_markup: yesNoKeyboard }
+          );
+          break;
+        default:
+          bot.answerCallbackQuery(query.id, { text: 'Nothing to skip here' });
+      }
+      return;
+    }
+    
+    // Handle yes/no
+    if (text === 'yes' || text === 'no') {
+      if (session.step === 'confirm_create') {
+        if (text === 'yes') {
+          const post = createPost({
+            description: session.postDraft.text || '',
+            imageUrl: session.postDraft.imageUrl || '',
+            detailsText: session.postDraft.detailsText || '',
+            telegramLink: session.postDraft.telegramLink || '',
+            whatsappLink: session.postDraft.whatsappLink || '',
+            instagramLink: session.postDraft.instagramLink || '',
+          });
+          resetSession(chatId);
+          bot.sendMessage(chatId, `✅ Post created! ID #${post?.id}`);
+        } else {
+          resetSession(chatId);
+          bot.sendMessage(chatId, '❌ Post creation cancelled.');
+        }
+      } else if (session.step === 'awaiting_delete_confirm') {
+        const delId = session.editPostId!;
+        if (text === 'yes') {
+          deletePost(delId);
+          bot.sendMessage(chatId, `✅ Post #${delId} deleted.`);
+        } else {
+          bot.sendMessage(chatId, '❌ Delete cancelled.');
+        }
+        resetSession(chatId);
+      }
+    }
+  });
+
   // /start
   bot.onText(/\/start/, (msg) => {
     if (!isAdmin(msg.chat.id)) {
@@ -162,6 +269,7 @@ export function registerHandlers(bot: TelegramBot) {
   // /editpost <id>
   bot.onText(/\/editpost (\d+)/, (msg, match) => {
     if (!isAdmin(msg.chat.id)) return;
+    console.log('[BOT] /editpost called', { chatId: msg.chat.id, match: match?.[1] });
     const id = Number(match![1]);
     const post = getPostById(id);
     if (!post) {
@@ -192,7 +300,8 @@ export function registerHandlers(bot: TelegramBot) {
     session.step = 'awaiting_delete_confirm';
     session.editPostId = id;
     bot.sendMessage(msg.chat.id,
-      `🗑 Delete post #${id}?\nSend YES to confirm:`
+      `🗑 Delete post #${id}?\nSend YES to confirm:`,
+      { reply_markup: yesNoKeyboard }
     );
   });
 
@@ -211,7 +320,8 @@ export function registerHandlers(bot: TelegramBot) {
         session.postDraft.text = messageToHtml(msg.text, msg.entities);
         session.step = 'awaiting_image';
         bot.sendMessage(msg.chat.id,
-          '📷 Send a PHOTO, or type "skip" to publish without image:'
+          '📷 Send a PHOTO, or type "skip" to publish without image:',
+          { reply_markup: skipKeyboard }
         );
         break;
       }
@@ -221,7 +331,8 @@ export function registerHandlers(bot: TelegramBot) {
           session.postDraft.imageUrl = '';
           session.step = 'awaiting_details';
           bot.sendMessage(msg.chat.id,
-            '📝 Send DETAILS text for the modal (or "skip"):'
+            '📝 Send DETAILS text for the modal (or "skip"):',
+            { reply_markup: skipKeyboard }
           );
         }
         break;
@@ -229,20 +340,20 @@ export function registerHandlers(bot: TelegramBot) {
       case 'awaiting_details': {
         session.postDraft.detailsText = text.toLowerCase() === 'skip' ? '' : messageToHtml(msg.text, msg.entities);
         session.step = 'awaiting_telegram_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send TELEGRAM link (or "skip"):');
+        bot.sendMessage(msg.chat.id, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
         break;
       }
 
       case 'awaiting_telegram_link':
         session.postDraft.telegramLink = text.toLowerCase() === 'skip' ? '' : text;
         session.step = 'awaiting_whatsapp_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send WHATSAPP link (or "skip"):');
+        bot.sendMessage(msg.chat.id, '🔗 Send WHATSAPP link (or "skip"):', { reply_markup: skipKeyboard });
         break;
 
       case 'awaiting_whatsapp_link':
         session.postDraft.whatsappLink = text.toLowerCase() === 'skip' ? '' : text;
         session.step = 'awaiting_instagram_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send INSTAGRAM link (or "skip"):');
+        bot.sendMessage(msg.chat.id, '🔗 Send INSTAGRAM link (or "skip"):', { reply_markup: skipKeyboard });
         break;
 
       case 'awaiting_instagram_link': {
@@ -251,13 +362,14 @@ export function registerHandlers(bot: TelegramBot) {
         const d = session.postDraft;
         bot.sendMessage(msg.chat.id,
           `📋 Post preview:\n\n` +
-          `Text: ${stripHtml(d.text || '').substring(0, 100)}...\n` +
+          `Text: ${stripHtml(d.text || '').substring(0, 100)}\n` +
           `Image: ${d.imageUrl ? '✅' : '❌'}\n` +
           `Details: ${d.detailsText ? '✅' : '❌'}\n` +
           `TG: ${d.telegramLink || '—'}\n` +
           `WA: ${d.whatsappLink || '—'}\n` +
           `IG: ${d.instagramLink || '—'}\n\n` +
-          `Send YES to publish, or /cancel.`
+          `Send YES to publish, or /cancel.`,
+          { reply_markup: yesNoKeyboard }
         );
         break;
       }
@@ -289,7 +401,7 @@ export function registerHandlers(bot: TelegramBot) {
           bot.sendMessage(msg.chat.id, '📝 Send new text:');
         } else if (session.editField === 'details') {
           bot.sendMessage(msg.chat.id, '📝 Send new details text:');
-        } else if (['telegram', 'whatsapp', 'instagram'].includes(session.editField)) {
+        } else if (['telegram', 'whatsapp', 'instagram'].includes(session.editField || '')) {
           bot.sendMessage(msg.chat.id, `🔗 Send new ${session.editField} link:`);
         } else {
           bot.sendMessage(msg.chat.id, '❌ Unknown field. Use: text, image, details, telegram, whatsapp, instagram');
@@ -356,7 +468,8 @@ export function registerHandlers(bot: TelegramBot) {
     try {
       const fileLink = await bot.getFileLink(largest.file_id);
       const response = await fetch(fileLink);
-      const buffer = Buffer.from(await response.arrayBuffer());
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
 
       if (!fs.existsSync(UPLOADS_DIR)) {
         fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -376,7 +489,8 @@ export function registerHandlers(bot: TelegramBot) {
         session.postDraft.imageUrl = imageUrl;
         session.step = 'awaiting_details';
         bot.sendMessage(msg.chat.id,
-          '✅ Image saved!\n📝 Send DETAILS text for the modal (or "skip"):'
+          '✅ Image saved!\n📝 Send DETAILS text for the modal (or "skip"):',
+          { reply_markup: skipKeyboard }
         );
       } else if (session.step === 'awaiting_image') {
         // Don't overwrite text with caption if text was already set
@@ -386,7 +500,8 @@ export function registerHandlers(bot: TelegramBot) {
         session.postDraft.imageUrl = imageUrl;
         session.step = 'awaiting_details';
         bot.sendMessage(msg.chat.id,
-          '✅ Image saved!\n📝 Send DETAILS text for the modal (or "skip"):'
+          '✅ Image saved!\n📝 Send DETAILS text for the modal (or "skip"):',
+          { reply_markup: skipKeyboard }
         );
       } else {
         const editId = session.editPostId!;
@@ -394,7 +509,8 @@ export function registerHandlers(bot: TelegramBot) {
         bot.sendMessage(msg.chat.id, `✅ Post #${editId} image updated!`);
         resetSession(msg.chat.id);
       }
-    } catch {
+    } catch (err) {
+      console.error('[BOT] Photo upload error:', err);
       bot.sendMessage(msg.chat.id, '❌ Failed to download image. Try again.');
     }
   });

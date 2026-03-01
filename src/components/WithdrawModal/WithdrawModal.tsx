@@ -2,12 +2,48 @@ import { useState } from 'react';
 import t from '../../locales/ru.json';
 
 interface WithdrawModalProps {
+  balance: number;
   onClose: () => void;
   onGoToSponsor?: () => void;
 }
 
-function WithdrawModal({ onClose }: WithdrawModalProps) {
+function WithdrawModal({ balance, onClose }: WithdrawModalProps) {
   const [showError, setShowError] = useState(false);
+  const [errorText, setErrorText] = useState('');
+  const [amount, setAmount] = useState('');
+
+  const handleSubmit = () => {
+    const normalized = amount.replace(',', '.').trim();
+    const numeric = Number(normalized);
+
+    console.log('[withdraw] submit', {
+      amount,
+      normalized,
+      numeric,
+      balance,
+      isFinite: Number.isFinite(numeric)
+    });
+
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      setErrorText(t.withdrawModal.invalidAmountError);
+      setShowError(true);
+      return;
+    }
+
+    if (numeric > balance) {
+      setErrorText(t.withdrawModal.insufficientBalanceError);
+      setShowError(true);
+      return;
+    }
+
+    if (numeric < 1000) {
+      setErrorText(t.withdrawModal.minAmountError);
+      setShowError(true);
+      return;
+    }
+
+    setShowError(false);
+  };
 
   return (
     <div
@@ -31,19 +67,21 @@ function WithdrawModal({ onClose }: WithdrawModalProps) {
           type="text"
           placeholder={t.withdrawModal.inputPlaceholder}
           className="w-full py-3 px-4 mt-[clamp(16px,2vw,24px)] rounded-[9px] border border-[rgba(255,255,255,0.3)] bg-[#535353] font-inter text-[clamp(16px,1.4vw,18px)] text-white placeholder-[rgba(255,255,255,0.4)] outline-none"
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
         />
 
         {showError && (
           <div className="w-full flex flex-col gap-2">
             <p className="font-inter font-semibold text-[clamp(14px,1.2vw,18px)] text-[#ff4d4d] text-center leading-[120%]">
-              {t.withdrawModal.error}
+              {errorText}
             </p>
           </div>
         )}
 
         <button
           className="w-full py-[clamp(12px,1.5vw,16px)] rounded-[9px] mt-[clamp(20px,2vw,30px)] bg-[#00af42] font-inter font-bold text-[clamp(18px,2vw,24px)] leading-[100%] text-center text-white active:scale-[0.97] transition-transform duration-100"
-          onClick={() => setShowError(true)}
+          onClick={handleSubmit}
         >
           {t.withdrawModal.submitButton}
         </button>
