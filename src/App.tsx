@@ -7,8 +7,8 @@ import { useReadPosts } from './hooks/useReadPosts';
 import coinImage from './assets/coin.png';
 
 // Postback URLs
-const LEAD_POSTBACK_URL = 'https://app.aio.tech/api/v1/trigger/conversion/{click_id}/e183a36c-27ed-4ded-92f8-9bc782e6a377?arrived_revenue={revenue}';
-const REG_POSTBACK_URL = 'https://app.aio.tech/api/v1/trigger/conversion/{click_id}/0325ec88-3b5b-410f-8ecf-16382fe2d8c4?arrived_revenue={revenue}';
+const LEAD_POSTBACK_URL = 'https://app.aio.tech/api/v1/trigger/conversion/{click_id}/e183a36c-27ed-4ded-92f8-9bc782e6a377';
+const REG_POSTBACK_URL = 'https://app.aio.tech/api/v1/trigger/conversion/{click_id}/0325ec88-3b5b-410f-8ecf-16382fe2d8c4';
 
 // Cookie helpers
 function setCookie(name: string, value: string, days: number = 30) {
@@ -32,9 +32,9 @@ function getClickIdFromUrl(): string | null {
   return params.get('click_id') || params.get('clickid') || params.get('cid');
 }
 
-async function sendPostback(urlTemplate: string, clickId: string, revenue: string = '0') {
+async function sendPostback(urlTemplate: string, clickId: string) {
   if (!clickId) return;
-  const url = urlTemplate.replace('{click_id}', clickId).replace('{revenue}', revenue);
+  const url = urlTemplate.replace('{click_id}', clickId);
   console.log('[POSTBACK] Sending:', url);
   try {
     await fetch(url, { method: 'GET', mode: 'no-cors' });
@@ -125,7 +125,7 @@ function App() {
     const leadSent = localStorage.getItem('lead_postback_sent');
     if (!leadSent) {
       localStorage.setItem('lead_postback_sent', 'true');
-      sendPostback(LEAD_POSTBACK_URL, savedClickId, String(balance));
+      sendPostback(LEAD_POSTBACK_URL, savedClickId);
     }
   }, []); // Only run on mount
 
@@ -137,9 +137,9 @@ function App() {
     const regSent = localStorage.getItem('reg_postback_sent');
     if (!regSent) {
       localStorage.setItem('reg_postback_sent', 'true');
-      sendPostback(REG_POSTBACK_URL, savedClickId, String(balance));
+      sendPostback(REG_POSTBACK_URL, savedClickId);
     }
-  }, [sponsorUnlocked, balance]);
+  }, [sponsorUnlocked]);
 
   // Energy regeneration: 1 energy per 2 minutes
   useEffect(() => {
