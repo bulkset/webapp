@@ -4,7 +4,7 @@ import DetailsModal from '../../components/DetailsModal/DetailsModal';
 import ChannelModal from '../../components/ChannelModal/ChannelModal';
 import PostCard from '../../components/PostCard/PostCard';
 import channelLogo from '../../assets/channelLogo.png';
-import t from '../../locales/ru.json';
+import t from '../../locales/eng.json';
 import { usePostVisibilityTracker } from '../../hooks/useReadPosts';
 import type { Post } from '../../types/post';
 

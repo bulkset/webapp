@@ -1,4 +1,4 @@
-import t from '../../locales/ru.json';
+import t from '../../locales/eng.json';
 
 interface BottomNavProps {
   activeTab: string;

@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import type { Post } from '../../types/post';
-import t from '../../locales/ru.json';
+import t from '../../locales/eng.json';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface DetailsModalProps {
@@ -28,9 +28,14 @@ function DetailsModal({ post, onClose }: DetailsModalProps) {
           </svg>
         </button>
         <div className="flex-1 overflow-y-auto min-h-0 px-3 py-3" data-scroll-allow>
+          {t.detailsModal.text1 && (
+            <h2 className="font-inter text-[18px] text-white font-bold leading-[140%] text-left mb-4">
+              {t.detailsModal.text1}
+            </h2>
+          )}
           <div
             className="post-content font-inter text-[14px] text-[#a6a6a6] leading-[140%] text-left"
-            dangerouslySetInnerHTML={{ __html: post.detailsText || t.detailsModal.text1 }}
+            dangerouslySetInnerHTML={{ __html: post.detailsText || t.detailsModal.text2 }}
           />
         </div>
 

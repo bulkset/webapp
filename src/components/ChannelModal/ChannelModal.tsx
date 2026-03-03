@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import channelLogo from '../../assets/channelLogo.png';
-import t from '../../locales/ru.json';
+import t from '../../locales/eng.json';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface ChannelModalProps {

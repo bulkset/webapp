@@ -4,7 +4,7 @@ import CoinHero from '../../components/CoinHero/CoinHero';
 import EnergyBar from '../../components/EnergyBar/EnergyBar';
 import BottomNav from '../../components/BottomNav/BottomNav';
 import EnergyModal from '../../components/EnergyModal/EnergyModal';
-import t from '../../locales/ru.json';
+import t from '../../locales/eng.json';
 
 interface HomePageProps {
   balance: number;

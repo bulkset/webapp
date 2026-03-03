@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import t from '../../locales/ru.json';
+import t from '../../locales/eng.json';
 
 interface WithdrawModalProps {
   balance: number;
