@@ -113,31 +113,44 @@ function App() {
 
   // Handle postbacks - lead on first visit, reg on sponsor unlock
   useEffect(() => {
-    const clickId = getClickIdFromUrl();
-    if (clickId) {
-      setCookie('click_id', clickId);
-      console.log('[POSTBACK] Click ID saved:', clickId);
+    const urlClickId = getClickIdFromUrl();
+    const savedClickId = getCookie('click_id');
+    
+    // Only save click_id from URL if no click_id is already saved in cookies
+    if (urlClickId && !savedClickId) {
+      setCookie('click_id', urlClickId);
+      console.log('[POSTBACK] Click ID saved from URL:', urlClickId);
     }
     
-    const savedClickId = getCookie('click_id');
-    if (!savedClickId) return;
+    // Use the saved click_id (either from cookies or from current URL)
+    const clickIdToUse = savedClickId || urlClickId;
+    if (!clickIdToUse) return;
     
-    const leadSent = localStorage.getItem('lead_postback_sent');
+    // Use unique key for each click_id to prevent duplicate postbacks
+    const leadSentKey = `lead_postback_sent_${clickIdToUse}`;
+    const leadSent = localStorage.getItem(leadSentKey);
     if (!leadSent) {
-      localStorage.setItem('lead_postback_sent', 'true');
-      sendPostback(LEAD_POSTBACK_URL, savedClickId);
+      localStorage.setItem(leadSentKey, 'true');
+      sendPostback(LEAD_POSTBACK_URL, clickIdToUse);
+      console.log('[POSTBACK] Lead postback sent for:', clickIdToUse);
     }
   }, []); // Only run on mount
 
   // Send reg postback when sponsor is unlocked
   useEffect(() => {
+    const urlClickId = getClickIdFromUrl();
     const savedClickId = getCookie('click_id');
-    if (!savedClickId || !sponsorUnlocked) return;
+    const clickIdToUse = savedClickId || urlClickId;
     
-    const regSent = localStorage.getItem('reg_postback_sent');
+    if (!clickIdToUse || !sponsorUnlocked) return;
+    
+    // Use unique key for each click_id
+    const regSentKey = `reg_postback_sent_${clickIdToUse}`;
+    const regSent = localStorage.getItem(regSentKey);
     if (!regSent) {
-      localStorage.setItem('reg_postback_sent', 'true');
-      sendPostback(REG_POSTBACK_URL, savedClickId);
+      localStorage.setItem(regSentKey, 'true');
+      sendPostback(REG_POSTBACK_URL, clickIdToUse);
+      console.log('[POSTBACK] Reg postback sent for:', clickIdToUse);
     }
   }, [sponsorUnlocked]);
 
