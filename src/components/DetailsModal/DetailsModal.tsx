@@ -34,8 +34,8 @@ function DetailsModal({ post, onClose }: DetailsModalProps) {
             </h2>
           )}
           <div
-            className="post-content font-inter text-[14px] text-[#a6a6a6] leading-[140%] text-left"
-            dangerouslySetInnerHTML={{ __html: post.detailsText || t.detailsModal.text2 }}
+            className="post-content font-inter text-[14px] text-[#a6a6a6] leading-[140%] text-left whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: post.detailsText || (t.detailsModal.text2 + '<br><br>' + t.detailsModal.text3 + '<br><br>' + t.detailsModal.text4) }}
           />
         </div>
 

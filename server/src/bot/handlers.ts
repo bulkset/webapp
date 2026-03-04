@@ -149,8 +149,8 @@ export function registerHandlers(bot: TelegramBot) {
       switch (session.step) {
         case 'awaiting_image':
           session.postDraft.imageUrl = '';
-          session.step = 'awaiting_details';
-          bot.sendMessage(chatId, '📝 Send DETAILS text for the modal (or "skip"):', { reply_markup: skipKeyboard });
+          session.step = 'awaiting_telegram_link';
+          bot.sendMessage(chatId, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
           break;
         case 'awaiting_details':
           session.postDraft.detailsText = '';
@@ -329,16 +329,13 @@ export function registerHandlers(bot: TelegramBot) {
       case 'awaiting_image':
         if (text.toLowerCase() === 'skip') {
           session.postDraft.imageUrl = '';
-          session.step = 'awaiting_details';
-          bot.sendMessage(msg.chat.id,
-            '📝 Send DETAILS text for the modal (or "skip"):',
-            { reply_markup: skipKeyboard }
-          );
+          session.step = 'awaiting_telegram_link';
+          bot.sendMessage(msg.chat.id, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
         }
         break;
 
       case 'awaiting_details': {
-        session.postDraft.detailsText = text.toLowerCase() === 'skip' ? '' : messageToHtml(msg.text, msg.entities);
+        session.postDraft.detailsText = '';
         session.step = 'awaiting_telegram_link';
         bot.sendMessage(msg.chat.id, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
         break;
@@ -487,22 +484,16 @@ export function registerHandlers(bot: TelegramBot) {
           session.postDraft.text = messageToHtml(msg.caption, msg.caption_entities);
         }
         session.postDraft.imageUrl = imageUrl;
-        session.step = 'awaiting_details';
-        bot.sendMessage(msg.chat.id,
-          '✅ Image saved!\n📝 Send DETAILS text for the modal (or "skip"):',
-          { reply_markup: skipKeyboard }
-        );
+        session.step = 'awaiting_telegram_link';
+        bot.sendMessage(msg.chat.id, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
       } else if (session.step === 'awaiting_image') {
         // Don't overwrite text with caption if text was already set
         if (msg.caption && !session.postDraft.text) {
           session.postDraft.text = messageToHtml(msg.caption, msg.caption_entities);
         }
         session.postDraft.imageUrl = imageUrl;
-        session.step = 'awaiting_details';
-        bot.sendMessage(msg.chat.id,
-          '✅ Image saved!\n📝 Send DETAILS text for the modal (or "skip"):',
-          { reply_markup: skipKeyboard }
-        );
+        session.step = 'awaiting_telegram_link';
+        bot.sendMessage(msg.chat.id, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
       } else {
         const editId = session.editPostId!;
         updatePost(editId, { imageUrl });

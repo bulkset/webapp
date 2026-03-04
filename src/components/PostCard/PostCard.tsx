@@ -113,7 +113,7 @@ const PostCard = forwardRef<HTMLDivElement, PostCardProps>(function PostCard({ p
         </div>
       )}
 
-      {onDetailsClick && post.detailsText && (
+      {onDetailsClick && (
         <button
           className="w-full py-2 rounded-[7px] bg-[#575757] font-inter font-bold text-[10px]! text-white text-center active:scale-[0.97] transition-transform duration-100 leading-[150%]"
           onClick={() => onDetailsClick(post)}
