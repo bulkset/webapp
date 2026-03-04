@@ -38,13 +38,28 @@ function transformPost(row: PostRow) {
     description: row.description,
     detailsText: row.details_text,
     imageUrl: row.image_url,
-    telegramLink: row.telegram_link,
-    whatsappLink: row.whatsapp_link,
-    instagramLink: row.instagram_link,
+    telegramLink: normalizeLink(row.telegram_link),
+    whatsappLink: normalizeLink(row.whatsapp_link),
+    instagramLink: normalizeLink(row.instagram_link),
     likeCount: row.like_count,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+// Normalize link to ensure it has proper protocol
+function normalizeLink(link: string): string {
+  if (!link) return '';
+  // If link already has protocol, return as is
+  if (link.startsWith('http://') || link.startsWith('https://') || link.startsWith('mailto:') || link.startsWith('tel:')) {
+    return link;
+  }
+  // If link starts with // (protocol-relative), add https
+  if (link.startsWith('//')) {
+    return 'https:' + link;
+  }
+  // If link is just a domain without protocol, add https://
+  return 'https://' + link;
 }
 
 // GET /api/posts/last?count=10  — single request to get last N posts + total
@@ -80,9 +95,34 @@ router.get('/:id', (req: Request, res: Response) => {
   res.json({ success: true, data: transformPost(post) });
 });
 
+// Validate and normalize social media links
+function normalizeSocialLink(link: string, type: 'telegram' | 'whatsapp' | 'instagram'): string {
+  if (!link) return '';
+  
+  // Remove leading/trailing whitespace
+  let normalized = link.trim();
+  
+  // Already has proper protocol
+  if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+    return normalized;
+  }
+  
+  // Protocol-relative URL
+  if (normalized.startsWith('//')) {
+    return 'https:' + normalized;
+  }
+  
+  // Add https:// for bare domains
+  if (!normalized.startsWith('http://') && !normalized.startsWith('https://') && !normalized.startsWith('://')) {
+    return 'https://' + normalized;
+  }
+  
+  return normalized;
+}
+
 // POST /api/posts
 router.post('/', (req: Request, res: Response) => {
-  const { description, imageUrl } = req.body;
+  const { description, imageUrl, telegramLink, whatsappLink, instagramLink } = req.body;
 
   if (!description) {
     res.status(400).json({ success: false, error: 'description is required' });
@@ -92,6 +132,9 @@ router.post('/', (req: Request, res: Response) => {
   const post = createPost({
     description,
     imageUrl: imageUrl || '',
+    telegramLink: normalizeSocialLink(telegramLink || '', 'telegram'),
+    whatsappLink: normalizeSocialLink(whatsappLink || '', 'whatsapp'),
+    instagramLink: normalizeSocialLink(instagramLink || '', 'instagram'),
   });
 
   if (!post) {
@@ -109,7 +152,20 @@ router.put('/:id', (req: Request, res: Response) => {
     res.status(404).json({ success: false, error: 'Post not found' });
     return;
   }
-  const post = updatePost(Number(req.params.id), req.body);
+  
+  // Normalize links before updating
+  const fields = req.body;
+  if (fields.telegramLink !== undefined) {
+    fields.telegramLink = normalizeSocialLink(fields.telegramLink, 'telegram');
+  }
+  if (fields.whatsappLink !== undefined) {
+    fields.whatsappLink = normalizeSocialLink(fields.whatsappLink, 'whatsapp');
+  }
+  if (fields.instagramLink !== undefined) {
+    fields.instagramLink = normalizeSocialLink(fields.instagramLink, 'instagram');
+  }
+  
+  const post = updatePost(Number(req.params.id), fields);
   if (!post) {
     res.status(500).json({ success: false, error: 'Failed to update post' });
     return;
