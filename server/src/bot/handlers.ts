@@ -1,7 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { getSession, resetSession } from './sessions.js';
 import {
-  getAllPosts, getPostById, createPost, updatePost, deletePost, type PostRow,
+  getAllPosts, getPostById, createPost, updatePost, deletePost, getChannelSettings, updateChannelSettings, type PostRow,
 } from '../db.js';
 import fs from 'fs';
 import path from 'path';
@@ -216,6 +216,18 @@ export function registerHandlers(bot: TelegramBot) {
           bot.sendMessage(chatId, '❌ Delete cancelled.');
         }
         resetSession(chatId);
+      } else if (session.step === 'confirm_channel_social') {
+        if (text === 'yes') {
+          updateChannelSettings({
+            telegram_link: session.channelDraft!.telegramLink,
+            whatsapp_link: session.channelDraft!.whatsappLink,
+            instagram_link: session.channelDraft!.instagramLink,
+          });
+          bot.sendMessage(chatId, '✅ Channel social links updated!');
+        } else {
+          bot.sendMessage(chatId, '❌ Update cancelled.');
+        }
+        resetSession(chatId);
       }
     }
   });
@@ -233,7 +245,30 @@ export function registerHandlers(bot: TelegramBot) {
       '/listposts — List all posts\n' +
       '/editpost <id> — Edit a post\n' +
       '/deletepost <id> — Delete a post\n' +
+      '/editchannelsocial — Edit channel social links\n' +
       '/cancel — Cancel current operation'
+    );
+  });
+
+  // /editchannelsocial
+  bot.onText(/\/editchannelsocial/, (msg) => {
+    if (!isAdmin(msg.chat.id)) return;
+    const session = getSession(msg.chat.id);
+    const settings = getChannelSettings();
+    session.step = 'awaiting_channel_telegram';
+    session.channelDraft = {
+      telegramLink: settings.telegram_link,
+      whatsappLink: settings.whatsapp_link,
+      instagramLink: settings.instagram_link,
+    };
+    bot.sendMessage(msg.chat.id,
+      `🔧 Edit channel social links\n\n` +
+      `Current links:\n` +
+      `TG: ${settings.telegram_link || '—'}\n` +
+      `WA: ${settings.whatsapp_link || '—'}\n` +
+      `IG: ${settings.instagram_link || '—'}\n\n` +
+      `🔗 Send new TELEGRAM link (or "skip" to keep current):`,
+      { reply_markup: skipKeyboard }
     );
   });
 
@@ -442,6 +477,46 @@ export function registerHandlers(bot: TelegramBot) {
         resetSession(msg.chat.id);
         break;
       }
+
+      case 'awaiting_channel_telegram':
+        session.channelDraft!.telegramLink = text.toLowerCase() === 'skip' ? session.channelDraft!.telegramLink || '' : text;
+        session.step = 'awaiting_channel_whatsapp';
+        bot.sendMessage(msg.chat.id, '🔗 Send WHATSAPP link (or "skip"):', { reply_markup: skipKeyboard });
+        break;
+
+      case 'awaiting_channel_whatsapp':
+        session.channelDraft!.whatsappLink = text.toLowerCase() === 'skip' ? session.channelDraft!.whatsappLink || '' : text;
+        session.step = 'awaiting_channel_instagram';
+        bot.sendMessage(msg.chat.id, '🔗 Send INSTAGRAM link (or "skip"):', { reply_markup: skipKeyboard });
+        break;
+
+      case 'awaiting_channel_instagram':
+        session.channelDraft!.instagramLink = text.toLowerCase() === 'skip' ? session.channelDraft!.instagramLink || '' : text;
+        session.step = 'confirm_channel_social';
+        const cd = session.channelDraft!;
+        bot.sendMessage(msg.chat.id,
+          `📋 Channel links preview:\n\n` +
+          `TG: ${cd.telegramLink || '—'}\n` +
+          `WA: ${cd.whatsappLink || '—'}\n` +
+          `IG: ${cd.instagramLink || '—'}\n\n` +
+          `Send YES to save, or /cancel.`,
+          { reply_markup: yesNoKeyboard }
+        );
+        break;
+
+      case 'confirm_channel_social':
+        if (text.toUpperCase() === 'YES') {
+          updateChannelSettings({
+            telegram_link: session.channelDraft!.telegramLink,
+            whatsapp_link: session.channelDraft!.whatsappLink,
+            instagram_link: session.channelDraft!.instagramLink,
+          });
+          bot.sendMessage(msg.chat.id, '✅ Channel social links updated!');
+        } else {
+          bot.sendMessage(msg.chat.id, '❌ Update cancelled.');
+        }
+        resetSession(msg.chat.id);
+        break;
 
       default:
         break;

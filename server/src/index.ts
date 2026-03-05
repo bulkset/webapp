@@ -4,6 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import postsRouter from './routes/posts.js';
+import channelRouter from './routes/channel.js';
 import { initDb, getDb, getAllPosts } from './db.js';
 import { startBot } from './bot/index.js';
 import { initLikeBoost } from './likeBoost.js';
@@ -26,6 +27,7 @@ async function main() {
 
   // API routes
   app.use('/api/posts', postsRouter);
+  app.use('/api/channel', channelRouter);
 
   // Health check
   app.get('/api/health', (_req, res) => {

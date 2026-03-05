@@ -76,3 +76,15 @@ export function getImageUrl(imageUrl: string): string {
   if (imageUrl.startsWith('http')) return imageUrl;
   return `${API_BASE}${imageUrl}`;
 }
+
+export interface ChannelSettings {
+  telegramLink: string;
+  whatsappLink: string;
+  instagramLink: string;
+}
+
+export async function getChannelSettings(): Promise<ChannelSettings> {
+  const res = await fetch(`${API_BASE}/api/channel/settings`);
+  if (!res.ok) throw new Error('Failed to fetch channel settings');
+  return res.json();
+}

@@ -9,7 +9,11 @@ export type BotStep =
   | 'confirm_create'
   | 'awaiting_edit_field'
   | 'awaiting_edit_value'
-  | 'awaiting_delete_confirm';
+  | 'awaiting_delete_confirm'
+  | 'awaiting_channel_telegram'
+  | 'awaiting_channel_whatsapp'
+  | 'awaiting_channel_instagram'
+  | 'confirm_channel_social';
 
 export interface BotSession {
   step: BotStep;
@@ -23,6 +27,11 @@ export interface BotSession {
   };
   editPostId?: number;
   editField?: string;
+  channelDraft?: {
+    telegramLink?: string;
+    whatsappLink?: string;
+    instagramLink?: string;
+  };
 }
 
 const sessions = new Map<number, BotSession>();

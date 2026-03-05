@@ -49,6 +49,19 @@ export async function initDb() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS channel_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      telegram_link TEXT NOT NULL DEFAULT '',
+      whatsapp_link TEXT NOT NULL DEFAULT '',
+      instagram_link TEXT NOT NULL DEFAULT '',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  // Insert default row if not exists
+  db.run(`INSERT OR IGNORE INTO channel_settings (id) VALUES (1)`);
+
   setDbInstance(db);
   saveDb();
   return db;
@@ -215,4 +228,50 @@ export function decrementLike(id: number): PostRow | undefined {
   db.run('UPDATE posts SET like_count = CASE WHEN like_count > 0 THEN like_count - 1 ELSE 0 END WHERE id = ?', [id]);
   saveDb();
   return getPostById(id);
+}
+
+export interface ChannelSettings {
+  telegram_link: string;
+  whatsapp_link: string;
+  instagram_link: string;
+}
+
+export function getChannelSettings(): ChannelSettings {
+  const db = getDbInstance();
+  const result = db.exec('SELECT telegram_link, whatsapp_link, instagram_link FROM channel_settings WHERE id = 1');
+  if (!result.length || !result[0]!.values.length) {
+    return { telegram_link: '', whatsapp_link: '', instagram_link: '' };
+  }
+  const row = result[0]!.values[0]!;
+  return {
+    telegram_link: row[0] as string,
+    whatsapp_link: row[1] as string,
+    instagram_link: row[2] as string,
+  };
+}
+
+export function updateChannelSettings(settings: Partial<ChannelSettings>): ChannelSettings {
+  const db = getDbInstance();
+  const sets: string[] = [];
+  const values: string[] = [];
+
+  if (settings.telegram_link !== undefined) {
+    sets.push('telegram_link = ?');
+    values.push(settings.telegram_link);
+  }
+  if (settings.whatsapp_link !== undefined) {
+    sets.push('whatsapp_link = ?');
+    values.push(settings.whatsapp_link);
+  }
+  if (settings.instagram_link !== undefined) {
+    sets.push('instagram_link = ?');
+    values.push(settings.instagram_link);
+  }
+
+  if (sets.length === 0) return getChannelSettings();
+
+  sets.push("updated_at = datetime('now')");
+  db.run(`UPDATE channel_settings SET ${sets.join(', ')} WHERE id = 1`, values);
+  saveDb();
+  return getChannelSettings();
 }
