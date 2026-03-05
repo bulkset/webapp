@@ -1,4 +1,4 @@
-import t from '../../locales/eng.json';
+import t from '../../locales/ES.json';
 
 interface EnergyBarProps {
   current: number;

@@ -4,7 +4,7 @@ import CoinHero from '../../components/CoinHero/CoinHero';
 import EnergyBar from '../../components/EnergyBar/EnergyBar';
 import BottomNav from '../../components/BottomNav/BottomNav';
 import EnergyModal from '../../components/EnergyModal/EnergyModal';
-import t from '../../locales/eng.json';
+import t from '../../locales/ES.json';
 
 interface HomePageProps {
   balance: number;
@@ -29,7 +29,7 @@ function HomePage({ balance, setBalance, energy, setEnergy, maxEnergy, onTabChan
     // Vibration feedback — try Telegram first, then browser API
     try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium'); } catch {}
     try { navigator.vibrate?.(15); } catch {}
-    setBalance((prev) => prev + 1);
+    setBalance((prev) => prev + 0.05);
     setEnergy((prev) => prev - 1);
   };
 

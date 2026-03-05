@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import channelLogo from '../../assets/channelLogo.png';
-import t from '../../locales/eng.json';
+import t from '../../locales/ES.json';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface EnergyModalProps {

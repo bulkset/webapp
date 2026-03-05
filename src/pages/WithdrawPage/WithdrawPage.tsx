@@ -2,7 +2,7 @@ import { useState } from 'react';
 import coinImage from '../../assets/coin.png';
 import BottomNav from '../../components/BottomNav/BottomNav';
 import WithdrawModal from '../../components/WithdrawModal/WithdrawModal';
-import t from '../../locales/eng.json';
+import t from '../../locales/ES.json';
 
 interface WithdrawPageProps {
   balance: number;

@@ -1,7 +1,7 @@
 import { useState, useCallback, forwardRef } from 'react';
 import type { Post } from '../../types/post';
 import { likePost, unlikePost, getImageUrl } from '../../api/posts';
-import t from '../../locales/eng.json';
+import t from '../../locales/ES.json';
 
 interface PostCardProps {
   post: Post;

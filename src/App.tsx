@@ -58,8 +58,8 @@ document.addEventListener('click', (e) => {
   if (target.closest('button, a, [role="button"]')) vibrate();
 }, { passive: true });
 
-const BASE_ENERGY = 50;
-const UNLOCKED_ENERGY = 100;
+const BASE_ENERGY = 30;
+const UNLOCKED_ENERGY = 50;
 const ENERGY_REGEN_MS = 2 * 60 * 1000; // 1 energy per 2 minutes
 
 function loadNumber(key: string, fallback: number): number {

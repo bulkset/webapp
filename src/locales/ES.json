@@ -1,0 +1,78 @@
+{
+  "currency": "EUR",
+
+  "nav": {
+    "home": "INICIO",
+    "withdraw": "RETIRO",
+    "sponsor": "PATROCINADOR"
+  },
+
+  "home": {
+    "euroCoinAlt": "Ingresos"
+  },
+
+  "withdraw": {
+    "title": "Tu saldo",
+    "buttonText": "Retiro",
+    "euroCoinAlt": "Ingresos"
+  },
+
+  "sponsor": {
+    "channelName": "Nombre del canal",
+    "subscribers": "10422 suscriptores",
+    "channelAvatarAlt": "Channel avatar"
+  },
+
+  "post": {
+    "detailsButton": "MÁS INFO",
+    "telegram": "Telegram",
+    "whatsapp": "WhatsApp",
+    "instagram": "Instagram",
+    "postImageAlt": "Post",
+    "loading": "Cargando…",
+    "error": "Error de carga",
+    "retry": "Reintentar",
+    "noPosts": "No hay publicaciones"
+  },
+
+  "energyModal": {
+    "title": "Más energía de 30 a 50 ⚡",
+    "description": "¡Desbloquea el blog del patrocinador y obtén la oportunidad de ganar el doble de dinero!",
+    "unlockButton": "Desbloquear",
+    "sponsorAlt": "Patrocinador"
+  },
+
+  "withdrawModal": {
+    "title": "Retiro",
+    "inputPlaceholder": "Cantidad (EUR)",
+    "submitButton": "Retirar",
+    "minAmountError": "El retiro mínimo es de 1000 EUR. ¡Ve a la sección Patrocinador para ganar aún más!",
+    "insufficientBalanceError": "Saldo insuficiente para retirar la cantidad especificada",
+    "invalidAmountError": "Introduce una cantidad de retiro válida."
+  },
+
+  "detailsModal": {
+    "text1": "Invertir es una forma de asignar capital con el objetivo de un crecimiento potencial a lo largo del tiempo. Consiste en invertir fondos en diferentes activos como mercados financieros, bienes raíces o proyectos innovadores, dependiendo de los objetivos individuales y la tolerancia al riesgo.",
+    "text2": "Todas las inversiones conllevan un cierto nivel de riesgo, por lo que es importante un análisis cuidadoso y un enfoque equilibrado. Muchos inversores se centran en estrategias a largo plazo, diversificación y evaluación constante en lugar de resultados a corto plazo.",
+    "text3": "Invertir es una forma de asignar capital con el objetivo de un crecimiento potencial a lo largo del tiempo. Consiste en invertir fondos en diferentes activos como mercados financieros, bienes raíces o proyectos innovadores, dependiendo de los objetivos individuales y la tolerancia al riesgo.",
+    "text4": "Todas las inversiones conllevan un cierto nivel de riesgo, por lo que es importante un análisis cuidadoso y un enfoque equilibrado.",
+    "telegram": "Telegram",
+    "whatsapp": "WhatsApp",
+    "instagram": "Instagram"
+  },
+
+  "channelModal": {
+    "actorName": "Gran comercio de Cripto 📊",
+    "title": "Operador de Forex y criptomonedas - Martín Soler",
+    "text1": "💻 Más de 14 años de experiencia en el comercio de criptomonedas y análisis financiero.",
+    "text2": "📈 Más de 5 años de experiencia en la enseñanza del trading.",
+    "actorAlt": "Actor",
+    "telegram": "Telegram",
+    "whatsapp": "WhatsApp",
+    "instagram": "Instagram"
+  },
+
+  "energyBar": {
+    "addEnergy": "Añadir energía"
+  }
+}
