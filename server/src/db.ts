@@ -39,7 +39,7 @@ export async function initDb() {
       why_title TEXT NOT NULL DEFAULT 'Why Choose Us',
       why_items TEXT NOT NULL DEFAULT '[]',
       image_url TEXT NOT NULL DEFAULT '',
-      telegram_link TEXT NOT NULL DEFAULT '',
+      facebook_link TEXT NOT NULL DEFAULT '',
       twitter_link TEXT NOT NULL DEFAULT '',
       instagram_link TEXT NOT NULL DEFAULT '',
       details_text TEXT NOT NULL DEFAULT '',
@@ -56,10 +56,17 @@ export async function initDb() {
     // Column may already be renamed or not exist
   }
 
+  // Migrate telegram_link to facebook_link if exists
+  try {
+    db.run(`ALTER TABLE posts RENAME COLUMN telegram_link TO facebook_link`);
+  } catch (e) {
+    // Column may already be renamed or not exist
+  }
+
   db.run(`
     CREATE TABLE IF NOT EXISTS channel_settings (
       id INTEGER PRIMARY KEY CHECK (id = 1),
-      telegram_link TEXT NOT NULL DEFAULT '',
+      facebook_link TEXT NOT NULL DEFAULT '',
       twitter_link TEXT NOT NULL DEFAULT '',
       instagram_link TEXT NOT NULL DEFAULT '',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -69,6 +76,13 @@ export async function initDb() {
   // Migrate channel_settings whatsapp_link to twitter_link if exists
   try {
     db.run(`ALTER TABLE channel_settings RENAME COLUMN whatsapp_link TO twitter_link`);
+  } catch (e) {
+    // Column may already be renamed or not exist
+  }
+
+  // Migrate channel_settings telegram_link to facebook_link if exists
+  try {
+    db.run(`ALTER TABLE channel_settings RENAME COLUMN telegram_link TO facebook_link`);
   } catch (e) {
     // Column may already be renamed or not exist
   }
@@ -100,7 +114,7 @@ export interface PostRow {
   why_title: string;
   why_items: string;
   image_url: string;
-  telegram_link: string;
+  facebook_link: string;
   twitter_link: string;
   instagram_link: string;
   details_text: string;
@@ -159,21 +173,21 @@ export function createPost(post: {
   description: string;
   imageUrl?: string;
   detailsText?: string;
-  telegramLink?: string;
+  facebookLink?: string;
   twitterLink?: string;
   instagramLink?: string;
 }): PostRow | undefined {
   const db = getDbInstance();
   console.log('[createPost] DB instance:', !!db, 'globalThis key exists:', !!(globalThis as Record<string, unknown>)[GLOBAL_KEY]);
   db.run(
-    `INSERT INTO posts (title, description, image_url, details_text, telegram_link, twitter_link, instagram_link)
+    `INSERT INTO posts (title, description, image_url, details_text, facebook_link, twitter_link, instagram_link)
     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
       '',
       post.description,
       post.imageUrl || '',
       post.detailsText || '',
-      post.telegramLink || '',
+      post.facebookLink || '',
       post.twitterLink || '',
       post.instagramLink || '',
     ]
@@ -189,7 +203,7 @@ export function updatePost(id: number, fields: Partial<{
   description: string;
   imageUrl: string;
   detailsText: string;
-  telegramLink: string;
+  facebookLink: string;
   twitterLink: string;
   instagramLink: string;
 }>): PostRow | undefined {
@@ -198,7 +212,7 @@ export function updatePost(id: number, fields: Partial<{
     description: 'description',
     imageUrl: 'image_url',
     detailsText: 'details_text',
-    telegramLink: 'telegram_link',
+    facebookLink: 'facebook_link',
     twitterLink: 'twitter_link',
     instagramLink: 'instagram_link',
   };
@@ -245,20 +259,20 @@ export function decrementLike(id: number): PostRow | undefined {
 }
 
 export interface ChannelSettings {
-  telegram_link: string;
+  facebook_link: string;
   twitter_link: string;
   instagram_link: string;
 }
 
 export function getChannelSettings(): ChannelSettings {
   const db = getDbInstance();
-  const result = db.exec('SELECT telegram_link, twitter_link, instagram_link FROM channel_settings WHERE id = 1');
+  const result = db.exec('SELECT facebook_link, twitter_link, instagram_link FROM channel_settings WHERE id = 1');
   if (!result.length || !result[0]!.values.length) {
-    return { telegram_link: '', twitter_link: '', instagram_link: '' };
+    return { facebook_link: '', twitter_link: '', instagram_link: '' };
   }
   const row = result[0]!.values[0]!;
   return {
-    telegram_link: row[0] as string,
+    facebook_link: row[0] as string,
     twitter_link: row[1] as string,
     instagram_link: row[2] as string,
   };
@@ -269,9 +283,9 @@ export function updateChannelSettings(settings: Partial<ChannelSettings>): Chann
   const sets: string[] = [];
   const values: string[] = [];
 
-  if (settings.telegram_link !== undefined) {
-    sets.push('telegram_link = ?');
-    values.push(settings.telegram_link);
+  if (settings.facebook_link !== undefined) {
+    sets.push('facebook_link = ?');
+    values.push(settings.facebook_link);
   }
   if (settings.twitter_link !== undefined) {
     sets.push('twitter_link = ?');

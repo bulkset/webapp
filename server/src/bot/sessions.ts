@@ -3,14 +3,14 @@ export type BotStep =
   | 'awaiting_text'
   | 'awaiting_image'
   | 'awaiting_details'
-  | 'awaiting_telegram_link'
+  | 'awaiting_facebook_link'
   | 'awaiting_twitter_link'
   | 'awaiting_instagram_link'
   | 'confirm_create'
   | 'awaiting_edit_field'
   | 'awaiting_edit_value'
   | 'awaiting_delete_confirm'
-  | 'awaiting_channel_telegram'
+  | 'awaiting_channel_facebook'
   | 'awaiting_channel_twitter'
   | 'awaiting_channel_instagram'
   | 'confirm_channel_social';
@@ -21,14 +21,14 @@ export interface BotSession {
     text?: string;
     imageUrl?: string;
     detailsText?: string;
-    telegramLink?: string;
+    facebookLink?: string;
     twitterLink?: string;
     instagramLink?: string;
   };
   editPostId?: number;
   editField?: string;
   channelDraft?: {
-    telegramLink?: string;
+    facebookLink?: string;
     twitterLink?: string;
     instagramLink?: string;
   };

@@ -24,7 +24,7 @@ const PostCard = forwardRef<HTMLDivElement, PostCardProps>(function PostCard({ p
   const [likeCount, setLikeCount] = useState(post.likeCount);
 
   const hasImage = post.imageUrl && post.imageUrl.length > 0;
-  const hasLinks = post.telegramLink || post.twitterLink || post.instagramLink;
+  const hasLinks = post.facebookLink || post.twitterLink || post.instagramLink;
 
   // Handle clicks on <a> tags inside dangerouslySetInnerHTML content
   const handleContentClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -81,12 +81,12 @@ const PostCard = forwardRef<HTMLDivElement, PostCardProps>(function PostCard({ p
 
       {hasLinks && (
         <div className="flex gap-[11px]">
-          {post.telegramLink && (
-            <a href={post.telegramLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 bg-[#37afe3] rounded-[8px] px-2 py-2 active:scale-95 transition-transform duration-100 min-w-0 flex-1 no-underline">
-              <svg className="shrink-0" width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9.12602 0C4.08846 0 0 4.08846 0 9.12602C0 14.1636 4.08846 18.252 9.12602 18.252C14.1636 18.252 18.252 14.1636 18.252 9.12602C18.252 4.08846 14.1636 0 9.12602 0ZM13.3605 6.2057C13.2236 7.64761 12.6304 11.152 12.3293 12.7673C12.2015 13.4518 11.946 13.6799 11.7087 13.7073C11.1794 13.7529 10.7778 13.3605 10.2668 13.0228C9.46369 12.4935 9.00739 12.165 8.23167 11.6539C7.3282 11.0607 7.91226 10.7322 8.43245 10.2029C8.56933 10.066 10.9056 7.93964 10.9512 7.74799C10.9576 7.71897 10.9567 7.68883 10.9488 7.6602C10.9408 7.63158 10.926 7.60532 10.9056 7.58373C10.8508 7.5381 10.7778 7.55635 10.714 7.56547C10.6318 7.58372 9.35417 8.43245 6.86277 10.1116C6.49773 10.358 6.16919 10.4858 5.87716 10.4767C5.54862 10.4675 4.92805 10.2942 4.46263 10.139C3.88769 9.95649 3.44051 9.8561 3.47701 9.53669C3.49527 9.37243 3.72342 9.20816 4.15234 9.03476C6.81714 7.87576 8.58759 7.10917 9.47281 6.74413C12.0098 5.68551 12.53 5.50299 12.8768 5.50299C12.9498 5.50299 13.1232 5.52124 13.2327 5.6125C13.324 5.68551 13.3514 5.7859 13.3605 5.85891C13.3514 5.91366 13.3696 6.07793 13.3605 6.2057Z" fill="white" />
+          {post.facebookLink && (
+            <a href={post.facebookLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 bg-[#1877F2] rounded-[8px] px-2 py-2 active:scale-95 transition-transform duration-100 min-w-0 flex-1 no-underline">
+              <svg className="shrink-0" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 0C4.477 0 0 4.477 0 10C0 14.991 3.657 19.128 8.205 19.879V12.89H6.147V10H8.205V7.797C8.205 5.324 9.69 4.014 11.83 4.014C12.791 4.014 13.566 4.106 13.795 4.138V6.625H12.519C11.543 6.625 11.339 7.21 11.339 7.879V10H13.795L13.379 12.89H11.339V19.717C15.322 19.075 18.75 15.191 18.75 10C18.75 4.477 14.523 0 10 0Z" fill="white"/>
               </svg>
-              <span className="font-inter font-bold text-[10px] text-white text-center leading-[150%]">{t.post.telegram}</span>
+              <span className="font-inter font-bold text-[10px] text-white text-center leading-[150%]">{t.post.facebook}</span>
             </a>
           )}
           {post.twitterLink && (

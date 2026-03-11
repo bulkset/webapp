@@ -38,7 +38,7 @@ function transformPost(row: PostRow) {
     description: row.description,
     detailsText: row.details_text,
     imageUrl: row.image_url,
-    telegramLink: normalizeLink(row.telegram_link),
+    facebookLink: normalizeLink(row.facebook_link),
     twitterLink: normalizeLink(row.twitter_link),
     instagramLink: normalizeLink(row.instagram_link),
     likeCount: row.like_count,
@@ -96,7 +96,7 @@ router.get('/:id', (req: Request, res: Response) => {
 });
 
 // Validate and normalize social media links
-function normalizeSocialLink(link: string, type: 'telegram' | 'twitter' | 'instagram'): string {
+function normalizeSocialLink(link: string, type: 'facebook' | 'twitter' | 'instagram'): string {
   if (!link) return '';
   
   // Remove leading/trailing whitespace
@@ -122,7 +122,7 @@ function normalizeSocialLink(link: string, type: 'telegram' | 'twitter' | 'insta
 
 // POST /api/posts
 router.post('/', (req: Request, res: Response) => {
-  const { description, imageUrl, telegramLink, twitterLink, instagramLink } = req.body;
+  const { description, imageUrl, facebookLink, twitterLink, instagramLink } = req.body;
 
   if (!description) {
     res.status(400).json({ success: false, error: 'description is required' });
@@ -132,7 +132,7 @@ router.post('/', (req: Request, res: Response) => {
   const post = createPost({
     description,
     imageUrl: imageUrl || '',
-    telegramLink: normalizeSocialLink(telegramLink || '', 'telegram'),
+    facebookLink: normalizeSocialLink(facebookLink || '', 'facebook'),
     twitterLink: normalizeSocialLink(twitterLink || '', 'twitter'),
     instagramLink: normalizeSocialLink(instagramLink || '', 'instagram'),
   });
@@ -155,8 +155,8 @@ router.put('/:id', (req: Request, res: Response) => {
   
   // Normalize links before updating
   const fields = req.body;
-  if (fields.telegramLink !== undefined) {
-    fields.telegramLink = normalizeSocialLink(fields.telegramLink, 'telegram');
+  if (fields.facebookLink !== undefined) {
+    fields.facebookLink = normalizeSocialLink(fields.facebookLink, 'facebook');
   }
   if (fields.twitterLink !== undefined) {
     fields.twitterLink = normalizeSocialLink(fields.twitterLink, 'twitter');

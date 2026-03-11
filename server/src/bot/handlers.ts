@@ -149,16 +149,16 @@ export function registerHandlers(bot: TelegramBot) {
       switch (session.step) {
         case 'awaiting_image':
           session.postDraft.imageUrl = '';
-          session.step = 'awaiting_telegram_link';
-          bot.sendMessage(chatId, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
+          session.step = 'awaiting_facebook_link';
+          bot.sendMessage(chatId, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
           break;
         case 'awaiting_details':
           session.postDraft.detailsText = '';
-          session.step = 'awaiting_telegram_link';
-          bot.sendMessage(chatId, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
+          session.step = 'awaiting_facebook_link';
+          bot.sendMessage(chatId, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
           break;
-        case 'awaiting_telegram_link':
-          session.postDraft.telegramLink = '';
+        case 'awaiting_facebook_link':
+          session.postDraft.facebookLink = '';
           session.step = 'awaiting_twitter_link';
           bot.sendMessage(chatId, '🔗 Send TWITTER link (or "skip"):', { reply_markup: skipKeyboard });
           break;
@@ -176,7 +176,7 @@ export function registerHandlers(bot: TelegramBot) {
             `Text: ${stripHtml(d.text || '').substring(0, 100)}\n` +
             `Image: ${d.imageUrl ? '✅' : '❌'}\n` +
             `Details: ${d.detailsText ? '✅' : '❌'}\n` +
-            `TG: ${d.telegramLink || '—'}\n` +
+            `TG: ${d.facebookLink || '—'}\n` +
             `X: ${d.twitterLink || '—'}\n` +
             `IG: ${d.instagramLink || '—'}\n\n` +
             `Send YES to publish, or /cancel.`,
@@ -197,7 +197,7 @@ export function registerHandlers(bot: TelegramBot) {
             description: session.postDraft.text || '',
             imageUrl: session.postDraft.imageUrl || '',
             detailsText: session.postDraft.detailsText || '',
-            telegramLink: session.postDraft.telegramLink || '',
+            facebookLink: session.postDraft.facebookLink || '',
             twitterLink: session.postDraft.twitterLink || '',
             instagramLink: session.postDraft.instagramLink || '',
           });
@@ -219,7 +219,7 @@ export function registerHandlers(bot: TelegramBot) {
       } else if (session.step === 'confirm_channel_social') {
         if (text === 'yes') {
           updateChannelSettings({
-            telegram_link: session.channelDraft!.telegramLink,
+            facebook_link: session.channelDraft!.facebookLink,
             twitter_link: session.channelDraft!.twitterLink,
             instagram_link: session.channelDraft!.instagramLink,
           });
@@ -255,19 +255,19 @@ export function registerHandlers(bot: TelegramBot) {
     if (!isAdmin(msg.chat.id)) return;
     const session = getSession(msg.chat.id);
     const settings = getChannelSettings();
-    session.step = 'awaiting_channel_telegram';
+    session.step = 'awaiting_channel_facebook';
     session.channelDraft = {
-      telegramLink: settings.telegram_link,
+      facebookLink: settings.facebook_link,
       twitterLink: settings.twitter_link,
       instagramLink: settings.instagram_link,
     };
     bot.sendMessage(msg.chat.id,
       `🔧 Edit channel social links\n\n` +
       `Current links:\n` +
-      `TG: ${settings.telegram_link || '—'}\n` +
+      `TG: ${settings.facebook_link || '—'}\n` +
       `X: ${settings.twitter_link || '—'}\n` +
       `IG: ${settings.instagram_link || '—'}\n\n` +
-      `🔗 Send new TELEGRAM link (or "skip" to keep current):`,
+      `🔗 Send new FACEBOOK link (or "skip" to keep current):`,
       { reply_markup: skipKeyboard }
     );
   });
@@ -317,7 +317,7 @@ export function registerHandlers(bot: TelegramBot) {
     bot.sendMessage(msg.chat.id,
       `✏️ Editing post #${id}.\n\n` +
       'Which field to edit?\n' +
-      'text, image, details, telegram, twitter, instagram\n\n' +
+      'text, image, details, facebook, twitter, instagram\n\n' +
       'Send the field name:'
     );
   });
@@ -364,20 +364,20 @@ export function registerHandlers(bot: TelegramBot) {
       case 'awaiting_image':
         if (text.toLowerCase() === 'skip') {
           session.postDraft.imageUrl = '';
-          session.step = 'awaiting_telegram_link';
-          bot.sendMessage(msg.chat.id, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
+          session.step = 'awaiting_facebook_link';
+          bot.sendMessage(msg.chat.id, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
         }
         break;
 
       case 'awaiting_details': {
         session.postDraft.detailsText = '';
-        session.step = 'awaiting_telegram_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
+        session.step = 'awaiting_facebook_link';
+        bot.sendMessage(msg.chat.id, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
         break;
       }
 
-      case 'awaiting_telegram_link':
-        session.postDraft.telegramLink = text.toLowerCase() === 'skip' ? '' : text;
+      case 'awaiting_facebook_link':
+        session.postDraft.facebookLink = text.toLowerCase() === 'skip' ? '' : text;
         session.step = 'awaiting_twitter_link';
         bot.sendMessage(msg.chat.id, '🔗 Send TWITTER link (or "skip"):', { reply_markup: skipKeyboard });
         break;
@@ -397,7 +397,7 @@ export function registerHandlers(bot: TelegramBot) {
           `Text: ${stripHtml(d.text || '').substring(0, 100)}\n` +
           `Image: ${d.imageUrl ? '✅' : '❌'}\n` +
           `Details: ${d.detailsText ? '✅' : '❌'}\n` +
-          `TG: ${d.telegramLink || '—'}\n` +
+          `TG: ${d.facebookLink || '—'}\n` +
           `X: ${d.twitterLink || '—'}\n` +
           `IG: ${d.instagramLink || '—'}\n\n` +
           `Send YES to publish, or /cancel.`,
@@ -412,7 +412,7 @@ export function registerHandlers(bot: TelegramBot) {
             description: session.postDraft.text || '',
             imageUrl: session.postDraft.imageUrl || '',
             detailsText: session.postDraft.detailsText || '',
-            telegramLink: session.postDraft.telegramLink || '',
+            facebookLink: session.postDraft.facebookLink || '',
             twitterLink: session.postDraft.twitterLink || '',
             instagramLink: session.postDraft.instagramLink || '',
           });
@@ -433,10 +433,10 @@ export function registerHandlers(bot: TelegramBot) {
           bot.sendMessage(msg.chat.id, '📝 Send new text:');
         } else if (session.editField === 'details') {
           bot.sendMessage(msg.chat.id, '📝 Send new details text:');
-        } else if (['telegram', 'twitter', 'instagram'].includes(session.editField || '')) {
+        } else if (['facebook', 'twitter', 'instagram'].includes(session.editField || '')) {
           bot.sendMessage(msg.chat.id, `🔗 Send new ${session.editField} link:`);
         } else {
-          bot.sendMessage(msg.chat.id, '❌ Unknown field. Use: text, image, details, telegram, twitter, instagram');
+          bot.sendMessage(msg.chat.id, '❌ Unknown field. Use: text, image, details, facebook, twitter, instagram');
           resetSession(msg.chat.id);
         }
         break;
@@ -452,9 +452,9 @@ export function registerHandlers(bot: TelegramBot) {
           const html = messageToHtml(msg.text, msg.entities);
           updatePost(editId, { detailsText: html });
           bot.sendMessage(msg.chat.id, `✅ Post #${editId} details updated!`);
-        } else if (field === 'telegram') {
-          updatePost(editId, { telegramLink: text });
-          bot.sendMessage(msg.chat.id, `✅ Post #${editId} telegram link updated!`);
+        } else if (field === 'facebook') {
+          updatePost(editId, { facebookLink: text });
+          bot.sendMessage(msg.chat.id, `✅ Post #${editId} facebook link updated!`);
         } else if (field === 'twitter') {
           updatePost(editId, { twitterLink: text });
           bot.sendMessage(msg.chat.id, `✅ Post #${editId} twitter link updated!`);
@@ -478,8 +478,8 @@ export function registerHandlers(bot: TelegramBot) {
         break;
       }
 
-      case 'awaiting_channel_telegram':
-        session.channelDraft!.telegramLink = text.toLowerCase() === 'skip' ? session.channelDraft!.telegramLink || '' : text;
+      case 'awaiting_channel_facebook':
+        session.channelDraft!.facebookLink = text.toLowerCase() === 'skip' ? session.channelDraft!.facebookLink || '' : text;
         session.step = 'awaiting_channel_twitter';
         bot.sendMessage(msg.chat.id, '🔗 Send TWITTER link (or "skip"):', { reply_markup: skipKeyboard });
         break;
@@ -496,7 +496,7 @@ export function registerHandlers(bot: TelegramBot) {
         const cd = session.channelDraft!;
         bot.sendMessage(msg.chat.id,
           `📋 Channel links preview:\n\n` +
-          `TG: ${cd.telegramLink || '—'}\n` +
+          `TG: ${cd.facebookLink || '—'}\n` +
           `X: ${cd.twitterLink || '—'}\n` +
           `IG: ${cd.instagramLink || '—'}\n\n` +
           `Send YES to save, or /cancel.`,
@@ -507,7 +507,7 @@ export function registerHandlers(bot: TelegramBot) {
       case 'confirm_channel_social':
         if (text.toUpperCase() === 'YES') {
           updateChannelSettings({
-            telegram_link: session.channelDraft!.telegramLink,
+            facebook_link: session.channelDraft!.facebookLink,
             twitter_link: session.channelDraft!.twitterLink,
             instagram_link: session.channelDraft!.instagramLink,
           });
@@ -559,16 +559,16 @@ export function registerHandlers(bot: TelegramBot) {
           session.postDraft.text = messageToHtml(msg.caption, msg.caption_entities);
         }
         session.postDraft.imageUrl = imageUrl;
-        session.step = 'awaiting_telegram_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
+        session.step = 'awaiting_facebook_link';
+        bot.sendMessage(msg.chat.id, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
       } else if (session.step === 'awaiting_image') {
         // Don't overwrite text with caption if text was already set
         if (msg.caption && !session.postDraft.text) {
           session.postDraft.text = messageToHtml(msg.caption, msg.caption_entities);
         }
         session.postDraft.imageUrl = imageUrl;
-        session.step = 'awaiting_telegram_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send TELEGRAM link (or "skip"):', { reply_markup: skipKeyboard });
+        session.step = 'awaiting_facebook_link';
+        bot.sendMessage(msg.chat.id, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
       } else {
         const editId = session.editPostId!;
         updatePost(editId, { imageUrl });

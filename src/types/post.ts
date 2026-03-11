@@ -3,7 +3,7 @@ export interface Post {
   description: string;
   detailsText: string;
   imageUrl: string;
-  telegramLink: string;
+  facebookLink: string;
   twitterLink: string;
   instagramLink: string;
   likeCount: number;

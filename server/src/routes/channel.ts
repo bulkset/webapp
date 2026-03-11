@@ -6,7 +6,7 @@ const router = Router();
 router.get('/settings', (req, res) => {
   const settings = getChannelSettings();
   res.json({
-    telegramLink: settings.telegram_link,
+    facebookLink: settings.facebook_link,
     twitterLink: settings.twitter_link,
     instagramLink: settings.instagram_link,
   });

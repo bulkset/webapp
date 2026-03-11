@@ -78,7 +78,7 @@ export function getImageUrl(imageUrl: string): string {
 }
 
 export interface ChannelSettings {
-  telegramLink: string;
+  facebookLink: string;
   twitterLink: string;
   instagramLink: string;
 }
