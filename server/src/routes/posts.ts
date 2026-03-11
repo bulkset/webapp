@@ -39,7 +39,7 @@ function transformPost(row: PostRow) {
     detailsText: row.details_text,
     imageUrl: row.image_url,
     telegramLink: normalizeLink(row.telegram_link),
-    whatsappLink: normalizeLink(row.whatsapp_link),
+    twitterLink: normalizeLink(row.twitter_link),
     instagramLink: normalizeLink(row.instagram_link),
     likeCount: row.like_count,
     createdAt: row.created_at,
@@ -96,7 +96,7 @@ router.get('/:id', (req: Request, res: Response) => {
 });
 
 // Validate and normalize social media links
-function normalizeSocialLink(link: string, type: 'telegram' | 'whatsapp' | 'instagram'): string {
+function normalizeSocialLink(link: string, type: 'telegram' | 'twitter' | 'instagram'): string {
   if (!link) return '';
   
   // Remove leading/trailing whitespace
@@ -122,7 +122,7 @@ function normalizeSocialLink(link: string, type: 'telegram' | 'whatsapp' | 'inst
 
 // POST /api/posts
 router.post('/', (req: Request, res: Response) => {
-  const { description, imageUrl, telegramLink, whatsappLink, instagramLink } = req.body;
+  const { description, imageUrl, telegramLink, twitterLink, instagramLink } = req.body;
 
   if (!description) {
     res.status(400).json({ success: false, error: 'description is required' });
@@ -133,7 +133,7 @@ router.post('/', (req: Request, res: Response) => {
     description,
     imageUrl: imageUrl || '',
     telegramLink: normalizeSocialLink(telegramLink || '', 'telegram'),
-    whatsappLink: normalizeSocialLink(whatsappLink || '', 'whatsapp'),
+    twitterLink: normalizeSocialLink(twitterLink || '', 'twitter'),
     instagramLink: normalizeSocialLink(instagramLink || '', 'instagram'),
   });
 
@@ -158,8 +158,8 @@ router.put('/:id', (req: Request, res: Response) => {
   if (fields.telegramLink !== undefined) {
     fields.telegramLink = normalizeSocialLink(fields.telegramLink, 'telegram');
   }
-  if (fields.whatsappLink !== undefined) {
-    fields.whatsappLink = normalizeSocialLink(fields.whatsappLink, 'whatsapp');
+  if (fields.twitterLink !== undefined) {
+    fields.twitterLink = normalizeSocialLink(fields.twitterLink, 'twitter');
   }
   if (fields.instagramLink !== undefined) {
     fields.instagramLink = normalizeSocialLink(fields.instagramLink, 'instagram');

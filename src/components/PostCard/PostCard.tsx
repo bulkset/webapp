@@ -24,7 +24,7 @@ const PostCard = forwardRef<HTMLDivElement, PostCardProps>(function PostCard({ p
   const [likeCount, setLikeCount] = useState(post.likeCount);
 
   const hasImage = post.imageUrl && post.imageUrl.length > 0;
-  const hasLinks = post.telegramLink || post.whatsappLink || post.instagramLink;
+  const hasLinks = post.telegramLink || post.twitterLink || post.instagramLink;
 
   // Handle clicks on <a> tags inside dangerouslySetInnerHTML content
   const handleContentClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -89,17 +89,12 @@ const PostCard = forwardRef<HTMLDivElement, PostCardProps>(function PostCard({ p
               <span className="font-inter font-bold text-[10px] text-white text-center leading-[150%]">{t.post.telegram}</span>
             </a>
           )}
-          {post.whatsappLink && (
-            <a href={post.whatsappLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 bg-[#26d367] rounded-[8px] px-2 py-2 active:scale-95 transition-transform duration-100 min-w-0 flex-1 no-underline">
-              <svg className="shrink-0" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <mask id={`mask_wa_${post.id}`} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
-                  <path d="M0 0H19.3257V19.3257H0V0Z" fill="white" />
-                </mask>
-                <g mask={`url(#mask_wa_${post.id})`}>
-                  <path d="M11.4836 0.142264L10.9038 0.0608924C9.16139 -0.19069 7.38334 0.0582024 5.77696 0.778553C4.17057 1.4989 2.80205 2.66103 1.83092 4.12946C0.797658 5.5331 0.181708 7.19995 0.0539484 8.93819C-0.0738107 10.6764 0.291814 12.4154 1.10875 13.9551C1.19235 14.1094 1.2444 14.2788 1.26187 14.4534C1.27933 14.628 1.26185 14.8044 1.21046 14.9722C0.793432 16.4064 0.406918 17.8507 6.10352e-05 19.3662L0.508632 19.2137C1.88177 18.8475 3.25492 18.4813 4.62806 18.1457C4.91788 18.0854 5.21913 18.1138 5.49263 18.227C6.72459 18.8283 8.0709 19.1591 9.44122 19.1972C10.8115 19.2353 12.1742 18.9799 13.4376 18.448C14.7011 17.9161 15.8362 17.1202 16.7667 16.1135C17.6973 15.1069 18.4017 13.9129 18.8328 12.6116C19.2639 11.3102 19.4116 9.93179 19.2661 8.56868C19.1206 7.20557 18.6852 5.88936 17.9892 4.70837C17.2931 3.52738 16.3525 2.50894 15.2304 1.7214C14.1084 0.933859 12.8309 0.395435 11.4836 0.142264ZM14.0468 13.4872C13.6771 13.8181 13.2263 14.0452 12.7403 14.1453C12.2543 14.2453 11.7505 14.2148 11.2802 14.0568C9.1492 13.4558 7.30034 12.1187 6.06223 10.2832C5.58943 9.63382 5.20944 8.92175 4.9332 8.16751C4.78353 7.72991 4.75654 7.25968 4.85516 6.80783C4.95378 6.35598 5.17424 5.93976 5.49263 5.60432C5.64763 5.4065 5.85861 5.25994 6.09809 5.18374C6.33757 5.10755 6.59444 5.10524 6.83526 5.17712C7.03868 5.22797 7.18108 5.52294 7.36417 5.74672C7.51335 6.16713 7.68626 6.57738 7.88291 6.97746C8.03185 7.1814 8.09405 7.43599 8.05593 7.68563C8.01782 7.93527 7.88249 8.1597 7.67948 8.30991C7.22177 8.71677 7.29297 9.05243 7.61845 9.51014C8.33763 10.5471 9.33063 11.3641 10.4868 11.8699C10.8123 12.0123 11.0564 12.0428 11.27 11.7072C11.3615 11.5749 11.4836 11.4631 11.5853 11.341C12.1753 10.5985 11.9922 10.6087 12.9279 11.0155C13.2263 11.141 13.5145 11.2867 13.7925 11.4529C14.0671 11.6156 14.4842 11.7885 14.5452 12.0327C14.6039 12.2975 14.5885 12.5734 14.5005 12.83C14.4126 13.0866 14.2556 13.314 14.0468 13.4872Z" fill="white" />
-                </g>
+          {post.twitterLink && (
+            <a href={post.twitterLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 bg-[#000000] rounded-[8px] px-2 py-2 active:scale-95 transition-transform duration-100 min-w-0 flex-1 no-underline">
+              <svg className="shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="white" />
               </svg>
-              <span className="font-inter font-bold text-[10px] text-white text-center leading-[150%]">{t.post.whatsapp}</span>
+              <span className="font-inter font-bold text-[10px] text-white text-center leading-[150%]">{t.post.twitter}</span>
             </a>
           )}
           {post.instagramLink && (

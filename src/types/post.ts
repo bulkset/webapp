@@ -4,7 +4,7 @@ export interface Post {
   detailsText: string;
   imageUrl: string;
   telegramLink: string;
-  whatsappLink: string;
+  twitterLink: string;
   instagramLink: string;
   likeCount: number;
   createdAt: string;

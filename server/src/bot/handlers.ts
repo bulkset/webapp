@@ -159,11 +159,11 @@ export function registerHandlers(bot: TelegramBot) {
           break;
         case 'awaiting_telegram_link':
           session.postDraft.telegramLink = '';
-          session.step = 'awaiting_whatsapp_link';
-          bot.sendMessage(chatId, '🔗 Send WHATSAPP link (or "skip"):', { reply_markup: skipKeyboard });
+          session.step = 'awaiting_twitter_link';
+          bot.sendMessage(chatId, '🔗 Send TWITTER link (or "skip"):', { reply_markup: skipKeyboard });
           break;
-        case 'awaiting_whatsapp_link':
-          session.postDraft.whatsappLink = '';
+        case 'awaiting_twitter_link':
+          session.postDraft.twitterLink = '';
           session.step = 'awaiting_instagram_link';
           bot.sendMessage(chatId, '🔗 Send INSTAGRAM link (or "skip"):', { reply_markup: skipKeyboard });
           break;
@@ -177,7 +177,7 @@ export function registerHandlers(bot: TelegramBot) {
             `Image: ${d.imageUrl ? '✅' : '❌'}\n` +
             `Details: ${d.detailsText ? '✅' : '❌'}\n` +
             `TG: ${d.telegramLink || '—'}\n` +
-            `WA: ${d.whatsappLink || '—'}\n` +
+            `X: ${d.twitterLink || '—'}\n` +
             `IG: ${d.instagramLink || '—'}\n\n` +
             `Send YES to publish, or /cancel.`,
             { reply_markup: yesNoKeyboard }
@@ -198,7 +198,7 @@ export function registerHandlers(bot: TelegramBot) {
             imageUrl: session.postDraft.imageUrl || '',
             detailsText: session.postDraft.detailsText || '',
             telegramLink: session.postDraft.telegramLink || '',
-            whatsappLink: session.postDraft.whatsappLink || '',
+            twitterLink: session.postDraft.twitterLink || '',
             instagramLink: session.postDraft.instagramLink || '',
           });
           resetSession(chatId);
@@ -220,7 +220,7 @@ export function registerHandlers(bot: TelegramBot) {
         if (text === 'yes') {
           updateChannelSettings({
             telegram_link: session.channelDraft!.telegramLink,
-            whatsapp_link: session.channelDraft!.whatsappLink,
+            twitter_link: session.channelDraft!.twitterLink,
             instagram_link: session.channelDraft!.instagramLink,
           });
           bot.sendMessage(chatId, '✅ Channel social links updated!');
@@ -258,14 +258,14 @@ export function registerHandlers(bot: TelegramBot) {
     session.step = 'awaiting_channel_telegram';
     session.channelDraft = {
       telegramLink: settings.telegram_link,
-      whatsappLink: settings.whatsapp_link,
+      twitterLink: settings.twitter_link,
       instagramLink: settings.instagram_link,
     };
     bot.sendMessage(msg.chat.id,
       `🔧 Edit channel social links\n\n` +
       `Current links:\n` +
       `TG: ${settings.telegram_link || '—'}\n` +
-      `WA: ${settings.whatsapp_link || '—'}\n` +
+      `X: ${settings.twitter_link || '—'}\n` +
       `IG: ${settings.instagram_link || '—'}\n\n` +
       `🔗 Send new TELEGRAM link (or "skip" to keep current):`,
       { reply_markup: skipKeyboard }
@@ -317,7 +317,7 @@ export function registerHandlers(bot: TelegramBot) {
     bot.sendMessage(msg.chat.id,
       `✏️ Editing post #${id}.\n\n` +
       'Which field to edit?\n' +
-      'text, image, details, telegram, whatsapp, instagram\n\n' +
+      'text, image, details, telegram, twitter, instagram\n\n' +
       'Send the field name:'
     );
   });
@@ -378,12 +378,12 @@ export function registerHandlers(bot: TelegramBot) {
 
       case 'awaiting_telegram_link':
         session.postDraft.telegramLink = text.toLowerCase() === 'skip' ? '' : text;
-        session.step = 'awaiting_whatsapp_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send WHATSAPP link (or "skip"):', { reply_markup: skipKeyboard });
+        session.step = 'awaiting_twitter_link';
+        bot.sendMessage(msg.chat.id, '🔗 Send TWITTER link (or "skip"):', { reply_markup: skipKeyboard });
         break;
 
-      case 'awaiting_whatsapp_link':
-        session.postDraft.whatsappLink = text.toLowerCase() === 'skip' ? '' : text;
+      case 'awaiting_twitter_link':
+        session.postDraft.twitterLink = text.toLowerCase() === 'skip' ? '' : text;
         session.step = 'awaiting_instagram_link';
         bot.sendMessage(msg.chat.id, '🔗 Send INSTAGRAM link (or "skip"):', { reply_markup: skipKeyboard });
         break;
@@ -398,7 +398,7 @@ export function registerHandlers(bot: TelegramBot) {
           `Image: ${d.imageUrl ? '✅' : '❌'}\n` +
           `Details: ${d.detailsText ? '✅' : '❌'}\n` +
           `TG: ${d.telegramLink || '—'}\n` +
-          `WA: ${d.whatsappLink || '—'}\n` +
+          `X: ${d.twitterLink || '—'}\n` +
           `IG: ${d.instagramLink || '—'}\n\n` +
           `Send YES to publish, or /cancel.`,
           { reply_markup: yesNoKeyboard }
@@ -413,7 +413,7 @@ export function registerHandlers(bot: TelegramBot) {
             imageUrl: session.postDraft.imageUrl || '',
             detailsText: session.postDraft.detailsText || '',
             telegramLink: session.postDraft.telegramLink || '',
-            whatsappLink: session.postDraft.whatsappLink || '',
+            twitterLink: session.postDraft.twitterLink || '',
             instagramLink: session.postDraft.instagramLink || '',
           });
           resetSession(msg.chat.id);
@@ -433,10 +433,10 @@ export function registerHandlers(bot: TelegramBot) {
           bot.sendMessage(msg.chat.id, '📝 Send new text:');
         } else if (session.editField === 'details') {
           bot.sendMessage(msg.chat.id, '📝 Send new details text:');
-        } else if (['telegram', 'whatsapp', 'instagram'].includes(session.editField || '')) {
+        } else if (['telegram', 'twitter', 'instagram'].includes(session.editField || '')) {
           bot.sendMessage(msg.chat.id, `🔗 Send new ${session.editField} link:`);
         } else {
-          bot.sendMessage(msg.chat.id, '❌ Unknown field. Use: text, image, details, telegram, whatsapp, instagram');
+          bot.sendMessage(msg.chat.id, '❌ Unknown field. Use: text, image, details, telegram, twitter, instagram');
           resetSession(msg.chat.id);
         }
         break;
@@ -455,9 +455,9 @@ export function registerHandlers(bot: TelegramBot) {
         } else if (field === 'telegram') {
           updatePost(editId, { telegramLink: text });
           bot.sendMessage(msg.chat.id, `✅ Post #${editId} telegram link updated!`);
-        } else if (field === 'whatsapp') {
-          updatePost(editId, { whatsappLink: text });
-          bot.sendMessage(msg.chat.id, `✅ Post #${editId} whatsapp link updated!`);
+        } else if (field === 'twitter') {
+          updatePost(editId, { twitterLink: text });
+          bot.sendMessage(msg.chat.id, `✅ Post #${editId} twitter link updated!`);
         } else if (field === 'instagram') {
           updatePost(editId, { instagramLink: text });
           bot.sendMessage(msg.chat.id, `✅ Post #${editId} instagram link updated!`);
@@ -480,12 +480,12 @@ export function registerHandlers(bot: TelegramBot) {
 
       case 'awaiting_channel_telegram':
         session.channelDraft!.telegramLink = text.toLowerCase() === 'skip' ? session.channelDraft!.telegramLink || '' : text;
-        session.step = 'awaiting_channel_whatsapp';
-        bot.sendMessage(msg.chat.id, '🔗 Send WHATSAPP link (or "skip"):', { reply_markup: skipKeyboard });
+        session.step = 'awaiting_channel_twitter';
+        bot.sendMessage(msg.chat.id, '🔗 Send TWITTER link (or "skip"):', { reply_markup: skipKeyboard });
         break;
 
-      case 'awaiting_channel_whatsapp':
-        session.channelDraft!.whatsappLink = text.toLowerCase() === 'skip' ? session.channelDraft!.whatsappLink || '' : text;
+      case 'awaiting_channel_twitter':
+        session.channelDraft!.twitterLink = text.toLowerCase() === 'skip' ? session.channelDraft!.twitterLink || '' : text;
         session.step = 'awaiting_channel_instagram';
         bot.sendMessage(msg.chat.id, '🔗 Send INSTAGRAM link (or "skip"):', { reply_markup: skipKeyboard });
         break;
@@ -497,7 +497,7 @@ export function registerHandlers(bot: TelegramBot) {
         bot.sendMessage(msg.chat.id,
           `📋 Channel links preview:\n\n` +
           `TG: ${cd.telegramLink || '—'}\n` +
-          `WA: ${cd.whatsappLink || '—'}\n` +
+          `X: ${cd.twitterLink || '—'}\n` +
           `IG: ${cd.instagramLink || '—'}\n\n` +
           `Send YES to save, or /cancel.`,
           { reply_markup: yesNoKeyboard }
@@ -508,7 +508,7 @@ export function registerHandlers(bot: TelegramBot) {
         if (text.toUpperCase() === 'YES') {
           updateChannelSettings({
             telegram_link: session.channelDraft!.telegramLink,
-            whatsapp_link: session.channelDraft!.whatsappLink,
+            twitter_link: session.channelDraft!.twitterLink,
             instagram_link: session.channelDraft!.instagramLink,
           });
           bot.sendMessage(msg.chat.id, '✅ Channel social links updated!');

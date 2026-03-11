@@ -40,7 +40,7 @@ export async function initDb() {
       why_items TEXT NOT NULL DEFAULT '[]',
       image_url TEXT NOT NULL DEFAULT '',
       telegram_link TEXT NOT NULL DEFAULT '',
-      whatsapp_link TEXT NOT NULL DEFAULT '',
+      twitter_link TEXT NOT NULL DEFAULT '',
       instagram_link TEXT NOT NULL DEFAULT '',
       details_text TEXT NOT NULL DEFAULT '',
       like_count INTEGER NOT NULL DEFAULT 0,
@@ -49,15 +49,29 @@ export async function initDb() {
     )
   `);
 
+  // Migrate whatsapp_link to twitter_link if exists
+  try {
+    db.run(`ALTER TABLE posts RENAME COLUMN whatsapp_link TO twitter_link`);
+  } catch (e) {
+    // Column may already be renamed or not exist
+  }
+
   db.run(`
     CREATE TABLE IF NOT EXISTS channel_settings (
       id INTEGER PRIMARY KEY CHECK (id = 1),
       telegram_link TEXT NOT NULL DEFAULT '',
-      whatsapp_link TEXT NOT NULL DEFAULT '',
+      twitter_link TEXT NOT NULL DEFAULT '',
       instagram_link TEXT NOT NULL DEFAULT '',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+
+  // Migrate channel_settings whatsapp_link to twitter_link if exists
+  try {
+    db.run(`ALTER TABLE channel_settings RENAME COLUMN whatsapp_link TO twitter_link`);
+  } catch (e) {
+    // Column may already be renamed or not exist
+  }
 
   // Insert default row if not exists
   db.run(`INSERT OR IGNORE INTO channel_settings (id) VALUES (1)`);
@@ -87,7 +101,7 @@ export interface PostRow {
   why_items: string;
   image_url: string;
   telegram_link: string;
-  whatsapp_link: string;
+  twitter_link: string;
   instagram_link: string;
   details_text: string;
   like_count: number;
@@ -146,13 +160,13 @@ export function createPost(post: {
   imageUrl?: string;
   detailsText?: string;
   telegramLink?: string;
-  whatsappLink?: string;
+  twitterLink?: string;
   instagramLink?: string;
 }): PostRow | undefined {
   const db = getDbInstance();
   console.log('[createPost] DB instance:', !!db, 'globalThis key exists:', !!(globalThis as Record<string, unknown>)[GLOBAL_KEY]);
   db.run(
-    `INSERT INTO posts (title, description, image_url, details_text, telegram_link, whatsapp_link, instagram_link)
+    `INSERT INTO posts (title, description, image_url, details_text, telegram_link, twitter_link, instagram_link)
     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
       '',
@@ -160,7 +174,7 @@ export function createPost(post: {
       post.imageUrl || '',
       post.detailsText || '',
       post.telegramLink || '',
-      post.whatsappLink || '',
+      post.twitterLink || '',
       post.instagramLink || '',
     ]
   );
@@ -176,7 +190,7 @@ export function updatePost(id: number, fields: Partial<{
   imageUrl: string;
   detailsText: string;
   telegramLink: string;
-  whatsappLink: string;
+  twitterLink: string;
   instagramLink: string;
 }>): PostRow | undefined {
   const db = getDbInstance();
@@ -185,7 +199,7 @@ export function updatePost(id: number, fields: Partial<{
     imageUrl: 'image_url',
     detailsText: 'details_text',
     telegramLink: 'telegram_link',
-    whatsappLink: 'whatsapp_link',
+    twitterLink: 'twitter_link',
     instagramLink: 'instagram_link',
   };
 
@@ -232,20 +246,20 @@ export function decrementLike(id: number): PostRow | undefined {
 
 export interface ChannelSettings {
   telegram_link: string;
-  whatsapp_link: string;
+  twitter_link: string;
   instagram_link: string;
 }
 
 export function getChannelSettings(): ChannelSettings {
   const db = getDbInstance();
-  const result = db.exec('SELECT telegram_link, whatsapp_link, instagram_link FROM channel_settings WHERE id = 1');
+  const result = db.exec('SELECT telegram_link, twitter_link, instagram_link FROM channel_settings WHERE id = 1');
   if (!result.length || !result[0]!.values.length) {
-    return { telegram_link: '', whatsapp_link: '', instagram_link: '' };
+    return { telegram_link: '', twitter_link: '', instagram_link: '' };
   }
   const row = result[0]!.values[0]!;
   return {
     telegram_link: row[0] as string,
-    whatsapp_link: row[1] as string,
+    twitter_link: row[1] as string,
     instagram_link: row[2] as string,
   };
 }
@@ -259,9 +273,9 @@ export function updateChannelSettings(settings: Partial<ChannelSettings>): Chann
     sets.push('telegram_link = ?');
     values.push(settings.telegram_link);
   }
-  if (settings.whatsapp_link !== undefined) {
-    sets.push('whatsapp_link = ?');
-    values.push(settings.whatsapp_link);
+  if (settings.twitter_link !== undefined) {
+    sets.push('twitter_link = ?');
+    values.push(settings.twitter_link);
   }
   if (settings.instagram_link !== undefined) {
     sets.push('instagram_link = ?');
