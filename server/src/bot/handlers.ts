@@ -1,7 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { getSession, resetSession } from './sessions.js';
 import {
-  getAllPosts, getPostById, createPost, updatePost, deletePost, getChannelSettings, updateChannelSettings, type PostRow,
+  getAllPosts, getPostById, createPost, updatePost, deletePost, getChannelSettings, updateChannelSettings, updateAllPostsSocialLinks, type PostRow,
 } from '../db.js';
 import fs from 'fs';
 import path from 'path';
@@ -218,12 +218,16 @@ export function registerHandlers(bot: TelegramBot) {
         resetSession(chatId);
       } else if (session.step === 'confirm_channel_social') {
         if (text === 'yes') {
-          updateChannelSettings({
+          const settings = {
             facebook_link: session.channelDraft!.facebookLink,
             twitter_link: session.channelDraft!.twitterLink,
             instagram_link: session.channelDraft!.instagramLink,
-          });
-          bot.sendMessage(chatId, '✅ Channel social links updated!');
+          };
+          // Update channel settings
+          updateChannelSettings(settings);
+          // Update all posts with the same social links
+          const updatedCount = updateAllPostsSocialLinks(settings);
+          bot.sendMessage(chatId, `✅ Social links updated! Channel and ${updatedCount} posts updated.`);
         } else {
           bot.sendMessage(chatId, '❌ Update cancelled.');
         }
@@ -506,12 +510,16 @@ export function registerHandlers(bot: TelegramBot) {
 
       case 'confirm_channel_social':
         if (text.toUpperCase() === 'YES') {
-          updateChannelSettings({
+          const settings = {
             facebook_link: session.channelDraft!.facebookLink,
             twitter_link: session.channelDraft!.twitterLink,
             instagram_link: session.channelDraft!.instagramLink,
-          });
-          bot.sendMessage(msg.chat.id, '✅ Channel social links updated!');
+          };
+          // Update channel settings
+          updateChannelSettings(settings);
+          // Update all posts with the same social links
+          const updatedCount = updateAllPostsSocialLinks(settings);
+          bot.sendMessage(msg.chat.id, `✅ Social links updated! Channel and ${updatedCount} posts updated.`);
         } else {
           bot.sendMessage(msg.chat.id, '❌ Update cancelled.');
         }

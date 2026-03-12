@@ -258,6 +258,34 @@ export function decrementLike(id: number): PostRow | undefined {
   return getPostById(id);
 }
 
+export function updateAllPostsSocialLinks(settings: { facebook_link?: string; twitter_link?: string; instagram_link?: string }): number {
+  const db = getDbInstance();
+  const sets: string[] = [];
+  const values: string[] = [];
+
+  if (settings.facebook_link !== undefined) {
+    sets.push('facebook_link = ?');
+    values.push(settings.facebook_link);
+  }
+  if (settings.twitter_link !== undefined) {
+    sets.push('twitter_link = ?');
+    values.push(settings.twitter_link);
+  }
+  if (settings.instagram_link !== undefined) {
+    sets.push('instagram_link = ?');
+    values.push(settings.instagram_link);
+  }
+
+  if (sets.length === 0) return 0;
+
+  sets.push("updated_at = datetime('now')");
+  db.run(`UPDATE posts SET ${sets.join(', ')}`, values);
+  saveDb();
+
+  const result = db.exec('SELECT COUNT(*) as cnt FROM posts');
+  return result.length ? (result[0]!.values[0]![0] as number) : 0;
+}
+
 export interface ChannelSettings {
   facebook_link: string;
   twitter_link: string;
