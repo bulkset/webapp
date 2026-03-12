@@ -26,6 +26,9 @@ const PostCard = forwardRef<HTMLDivElement, PostCardProps>(function PostCard({ p
   const hasImage = post.imageUrl && post.imageUrl.length > 0;
   const hasLinks = post.facebookLink || post.twitterLink || post.instagramLink;
 
+  // Check if the media is a video
+  const isVideo = hasImage && /\.(mp4|webm|mov|avi|mkv|ogv)$/i.test(post.imageUrl);
+
   // Handle clicks on <a> tags inside dangerouslySetInnerHTML content
   const handleContentClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -65,11 +68,22 @@ const PostCard = forwardRef<HTMLDivElement, PostCardProps>(function PostCard({ p
     <div ref={ref} data-post-id={post.id} className="bg-[#232227] rounded-[clamp(12px,1.5vw,20px)] py-[clamp(12px,1.5vw,24px)] px-[clamp(10px,1.3vw,20px)] flex flex-col gap-[clamp(12px,1.5vw,24px)]">
       {hasImage && (
         <div className="w-full rounded-[12px] overflow-hidden">
-          <img
-            src={getImageUrl(post.imageUrl)}
-            alt=""
-            className="w-full h-auto max-h-[400px] object-contain"
-          />
+          {isVideo ? (
+            <video
+              controls
+              className="w-full h-auto max-h-[400px] object-contain"
+              playsInline
+            >
+              <source src={getImageUrl(post.imageUrl)} />
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <img
+              src={getImageUrl(post.imageUrl)}
+              alt=""
+              className="w-full h-auto max-h-[400px] object-contain"
+            />
+          )}
         </div>
       )}
 

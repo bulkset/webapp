@@ -588,4 +588,64 @@ export function registerHandlers(bot: TelegramBot) {
       bot.sendMessage(msg.chat.id, '❌ Failed to download image. Try again.');
     }
   });
+
+  // Handle video messages
+  bot.on('video', async (msg) => {
+    if (!isAdmin(msg.chat.id)) return;
+    const session = getSession(msg.chat.id);
+
+    if (session.step !== 'awaiting_text' &&
+        session.step !== 'awaiting_image' &&
+        !(session.step === 'awaiting_edit_value' && session.editField === 'image')) {
+      return;
+    }
+
+    const video = msg.video!;
+
+    try {
+      const fileLink = await bot.getFileLink(video.file_id);
+      const response = await fetch(fileLink);
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      if (!fs.existsSync(UPLOADS_DIR)) {
+        fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+      }
+
+      // Get file extension from mime_type or default to mp4
+      const mimeType = video.mime_type || 'video/mp4';
+      const ext = mimeType.split('/')[1] || 'mp4';
+      const filename = `post-${Date.now()}.${ext}`;
+      const filepath = path.join(UPLOADS_DIR, filename);
+      fs.writeFileSync(filepath, buffer);
+
+      const videoUrl = `/uploads/${filename}`;
+
+      if (session.step === 'awaiting_text') {
+        // Video with caption on text step — save both text and video, skip awaiting_image
+        if (msg.caption) {
+          session.postDraft.text = messageToHtml(msg.caption, msg.caption_entities);
+        }
+        session.postDraft.imageUrl = videoUrl; // Store video URL in imageUrl field
+        session.step = 'awaiting_facebook_link';
+        bot.sendMessage(msg.chat.id, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
+      } else if (session.step === 'awaiting_image') {
+        // Don't overwrite text with caption if text was already set
+        if (msg.caption && !session.postDraft.text) {
+          session.postDraft.text = messageToHtml(msg.caption, msg.caption_entities);
+        }
+        session.postDraft.imageUrl = videoUrl; // Store video URL in imageUrl field
+        session.step = 'awaiting_facebook_link';
+        bot.sendMessage(msg.chat.id, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
+      } else {
+        const editId = session.editPostId!;
+        updatePost(editId, { imageUrl: videoUrl });
+        bot.sendMessage(msg.chat.id, `✅ Post #${editId} video updated!`);
+        resetSession(msg.chat.id);
+      }
+    } catch (err) {
+      console.error('[BOT] Video upload error:', err);
+      bot.sendMessage(msg.chat.id, '❌ Failed to download video. Try again.');
+    }
+  });
 }
