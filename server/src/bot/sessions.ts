@@ -32,6 +32,7 @@ export interface BotSession {
     twitterLink?: string;
     instagramLink?: string;
   };
+  listPostsPage?: number;
 }
 
 const sessions = new Map<number, BotSession>();

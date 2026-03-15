@@ -115,6 +115,8 @@ function stripHtml(html: string): string {
   return html.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
 }
 
+const POSTS_PER_PAGE = 10;
+
 // Inline keyboard helpers
 const skipKeyboard: TelegramBot.InlineKeyboardMarkup = {
   inline_keyboard: [[{ text: '⏭ Skip', callback_data: 'skip' }]]
@@ -126,6 +128,47 @@ const yesNoKeyboard: TelegramBot.InlineKeyboardMarkup = {
     [{ text: '❌ No', callback_data: 'no' }]
   ]
 };
+
+// Helper function to show posts with pagination
+function showPostsPage(bot: TelegramBot, chatId: number, posts: PostRow[], page: number, editMessageId?: number) {
+  const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
+  const startIdx = page * POSTS_PER_PAGE;
+  const endIdx = Math.min(startIdx + POSTS_PER_PAGE, posts.length);
+  const pagePosts = posts.slice(startIdx, endIdx);
+  
+  const list = pagePosts.map((p: PostRow) =>
+    `#${p.id} — ${stripHtml(p.description).substring(0, 40)}... (❤️ ${p.like_count})`
+  ).join('\n');
+  
+  // Build pagination keyboard
+  const keyboard: TelegramBot.InlineKeyboardButton[][] = [];
+  const navRow: TelegramBot.InlineKeyboardButton[] = [];
+  
+  if (page > 0) {
+    navRow.push({ text: '⬅️ Назад', callback_data: `listposts_page_${page - 1}` });
+  }
+  if (page < totalPages - 1) {
+    navRow.push({ text: 'Вперёд ➡️', callback_data: `listposts_page_${page + 1}` });
+  }
+  if (navRow.length > 0) {
+    keyboard.push(navRow);
+  }
+  
+  const replyMarkup: TelegramBot.InlineKeyboardMarkup = { inline_keyboard: keyboard };
+  const pageInfo = `📄 Страница ${page + 1}/${totalPages} | Всего: ${posts.length} постов`;
+  
+  const message = `📋 Posts:\n\n${list}\n\n${pageInfo}`;
+  
+  if (editMessageId) {
+    bot.editMessageText(message, {
+      chat_id: chatId,
+      message_id: editMessageId,
+      reply_markup: replyMarkup
+    });
+  } else {
+    bot.sendMessage(chatId, message, { reply_markup: replyMarkup });
+  }
+}
 
 export function registerHandlers(bot: TelegramBot) {
   // Handle inline keyboard callbacks
@@ -144,41 +187,50 @@ export function registerHandlers(bot: TelegramBot) {
     const session = getSession(chatId);
     const text = data;
     
+    // Handle listposts pagination
+    if (data.startsWith('listposts_page_')) {
+      const page = parseInt(data.replace('listposts_page_', ''), 10);
+      const posts = getAllPosts();
+      session.listPostsPage = page;
+      showPostsPage(bot, chatId, posts, page, messageId);
+      return;
+    }
+    
     // Handle skip
     if (text === 'skip') {
       switch (session.step) {
         case 'awaiting_image':
           session.postDraft.imageUrl = '';
-          session.step = 'awaiting_facebook_link';
-          bot.sendMessage(chatId, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
+          // Skip social links - use channel settings instead
+          session.step = 'confirm_create';
+          const d1 = session.postDraft;
+          const settings1 = getChannelSettings();
+          bot.sendMessage(chatId,
+            `📋 Post preview:\n\n` +
+            `Text: ${stripHtml(d1.text || '').substring(0, 100)}\n` +
+            `Image: ${d1.imageUrl ? '✅' : '❌'}\n` +
+            `Details: ${d1.detailsText ? '✅' : '❌'}\n` +
+            `TG: ${settings1.facebook_link || '—'}\n` +
+            `X: ${settings1.twitter_link || '—'}\n` +
+            `IG: ${settings1.instagram_link || '—'}\n\n` +
+            `Send YES to publish, or /cancel.`,
+            { reply_markup: yesNoKeyboard }
+          );
           break;
         case 'awaiting_details':
           session.postDraft.detailsText = '';
-          session.step = 'awaiting_facebook_link';
-          bot.sendMessage(chatId, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
-          break;
-        case 'awaiting_facebook_link':
-          session.postDraft.facebookLink = '';
-          session.step = 'awaiting_twitter_link';
-          bot.sendMessage(chatId, '🔗 Send TWITTER link (or "skip"):', { reply_markup: skipKeyboard });
-          break;
-        case 'awaiting_twitter_link':
-          session.postDraft.twitterLink = '';
-          session.step = 'awaiting_instagram_link';
-          bot.sendMessage(chatId, '🔗 Send INSTAGRAM link (or "skip"):', { reply_markup: skipKeyboard });
-          break;
-        case 'awaiting_instagram_link':
-          session.postDraft.instagramLink = '';
+          // Skip social links - use channel settings instead
           session.step = 'confirm_create';
-          const d = session.postDraft;
+          const d2 = session.postDraft;
+          const settings2 = getChannelSettings();
           bot.sendMessage(chatId,
             `📋 Post preview:\n\n` +
-            `Text: ${stripHtml(d.text || '').substring(0, 100)}\n` +
-            `Image: ${d.imageUrl ? '✅' : '❌'}\n` +
-            `Details: ${d.detailsText ? '✅' : '❌'}\n` +
-            `TG: ${d.facebookLink || '—'}\n` +
-            `X: ${d.twitterLink || '—'}\n` +
-            `IG: ${d.instagramLink || '—'}\n\n` +
+            `Text: ${stripHtml(d2.text || '').substring(0, 100)}\n` +
+            `Image: ${d2.imageUrl ? '✅' : '❌'}\n` +
+            `Details: ${d2.detailsText ? '✅' : '❌'}\n` +
+            `TG: ${settings2.facebook_link || '—'}\n` +
+            `X: ${settings2.twitter_link || '—'}\n` +
+            `IG: ${settings2.instagram_link || '—'}\n\n` +
             `Send YES to publish, or /cancel.`,
             { reply_markup: yesNoKeyboard }
           );
@@ -193,13 +245,15 @@ export function registerHandlers(bot: TelegramBot) {
     if (text === 'yes' || text === 'no') {
       if (session.step === 'confirm_create') {
         if (text === 'yes') {
+          // Get social links from channel settings
+          const channelSettings = getChannelSettings();
           const post = createPost({
             description: session.postDraft.text || '',
             imageUrl: session.postDraft.imageUrl || '',
             detailsText: session.postDraft.detailsText || '',
-            facebookLink: session.postDraft.facebookLink || '',
-            twitterLink: session.postDraft.twitterLink || '',
-            instagramLink: session.postDraft.instagramLink || '',
+            facebookLink: channelSettings.facebook_link || '',
+            twitterLink: channelSettings.twitter_link || '',
+            instagramLink: channelSettings.instagram_link || '',
           });
           resetSession(chatId);
           bot.sendMessage(chatId, `✅ Post created! ID #${post?.id}`);
@@ -294,15 +348,15 @@ export function registerHandlers(bot: TelegramBot) {
   // /listposts
   bot.onText(/\/listposts/, (msg) => {
     if (!isAdmin(msg.chat.id)) return;
+    const session = getSession(msg.chat.id);
     const posts = getAllPosts();
     if (posts.length === 0) {
       bot.sendMessage(msg.chat.id, '📭 No posts found.');
       return;
     }
-    const list = posts.map((p: PostRow) =>
-      `#${p.id} — ${stripHtml(p.description).substring(0, 40)}... (❤️ ${p.like_count})`
-    ).join('\n');
-    bot.sendMessage(msg.chat.id, `📋 Posts:\n${list}`);
+    // Start from beginning
+    session.listPostsPage = 0;
+    showPostsPage(bot, msg.chat.id, posts, 0);
   });
 
   // /editpost <id>
@@ -368,42 +422,38 @@ export function registerHandlers(bot: TelegramBot) {
       case 'awaiting_image':
         if (text.toLowerCase() === 'skip') {
           session.postDraft.imageUrl = '';
-          session.step = 'awaiting_facebook_link';
-          bot.sendMessage(msg.chat.id, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
+          // Skip social links - use channel settings instead
+          session.step = 'confirm_create';
+          const d1 = session.postDraft;
+          const settings1 = getChannelSettings();
+          bot.sendMessage(msg.chat.id,
+            `📋 Post preview:\n\n` +
+            `Text: ${stripHtml(d1.text || '').substring(0, 100)}\n` +
+            `Image: ${d1.imageUrl ? '✅' : '❌'}\n` +
+            `Details: ${d1.detailsText ? '✅' : '❌'}\n` +
+            `TG: ${settings1.facebook_link || '—'}\n` +
+            `X: ${settings1.twitter_link || '—'}\n` +
+            `IG: ${settings1.instagram_link || '—'}\n\n` +
+            `Send YES to publish, or /cancel.`,
+            { reply_markup: yesNoKeyboard }
+          );
         }
         break;
 
       case 'awaiting_details': {
         session.postDraft.detailsText = '';
-        session.step = 'awaiting_facebook_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
-        break;
-      }
-
-      case 'awaiting_facebook_link':
-        session.postDraft.facebookLink = text.toLowerCase() === 'skip' ? '' : text;
-        session.step = 'awaiting_twitter_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send TWITTER link (or "skip"):', { reply_markup: skipKeyboard });
-        break;
-
-      case 'awaiting_twitter_link':
-        session.postDraft.twitterLink = text.toLowerCase() === 'skip' ? '' : text;
-        session.step = 'awaiting_instagram_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send INSTAGRAM link (or "skip"):', { reply_markup: skipKeyboard });
-        break;
-
-      case 'awaiting_instagram_link': {
-        session.postDraft.instagramLink = text.toLowerCase() === 'skip' ? '' : text;
+        // Skip social links - use channel settings instead
         session.step = 'confirm_create';
-        const d = session.postDraft;
+        const d2 = session.postDraft;
+        const settings2 = getChannelSettings();
         bot.sendMessage(msg.chat.id,
           `📋 Post preview:\n\n` +
-          `Text: ${stripHtml(d.text || '').substring(0, 100)}\n` +
-          `Image: ${d.imageUrl ? '✅' : '❌'}\n` +
-          `Details: ${d.detailsText ? '✅' : '❌'}\n` +
-          `TG: ${d.facebookLink || '—'}\n` +
-          `X: ${d.twitterLink || '—'}\n` +
-          `IG: ${d.instagramLink || '—'}\n\n` +
+          `Text: ${stripHtml(d2.text || '').substring(0, 100)}\n` +
+          `Image: ${d2.imageUrl ? '✅' : '❌'}\n` +
+          `Details: ${d2.detailsText ? '✅' : '❌'}\n` +
+          `TG: ${settings2.facebook_link || '—'}\n` +
+          `X: ${settings2.twitter_link || '—'}\n` +
+          `IG: ${settings2.instagram_link || '—'}\n\n` +
           `Send YES to publish, or /cancel.`,
           { reply_markup: yesNoKeyboard }
         );
@@ -412,13 +462,15 @@ export function registerHandlers(bot: TelegramBot) {
 
       case 'confirm_create':
         if (text.toUpperCase() === 'YES') {
+          // Get social links from channel settings
+          const channelSettings = getChannelSettings();
           const post = createPost({
             description: session.postDraft.text || '',
             imageUrl: session.postDraft.imageUrl || '',
             detailsText: session.postDraft.detailsText || '',
-            facebookLink: session.postDraft.facebookLink || '',
-            twitterLink: session.postDraft.twitterLink || '',
-            instagramLink: session.postDraft.instagramLink || '',
+            facebookLink: channelSettings.facebook_link || '',
+            twitterLink: channelSettings.twitter_link || '',
+            instagramLink: channelSettings.instagram_link || '',
           });
           resetSession(msg.chat.id);
           bot.sendMessage(msg.chat.id, `✅ Post created! ID #${post?.id}`);
@@ -567,16 +619,42 @@ export function registerHandlers(bot: TelegramBot) {
           session.postDraft.text = messageToHtml(msg.caption, msg.caption_entities);
         }
         session.postDraft.imageUrl = imageUrl;
-        session.step = 'awaiting_facebook_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
+        // Skip social links - use channel settings instead
+        session.step = 'confirm_create';
+        const d1 = session.postDraft;
+        const settings1 = getChannelSettings();
+        bot.sendMessage(msg.chat.id,
+          `📋 Post preview:\n\n` +
+          `Text: ${stripHtml(d1.text || '').substring(0, 100)}\n` +
+          `Image: ${d1.imageUrl ? '✅' : '❌'}\n` +
+          `Details: ${d1.detailsText ? '✅' : '❌'}\n` +
+          `TG: ${settings1.facebook_link || '—'}\n` +
+          `X: ${settings1.twitter_link || '—'}\n` +
+          `IG: ${settings1.instagram_link || '—'}\n\n` +
+          `Send YES to publish, or /cancel.`,
+          { reply_markup: yesNoKeyboard }
+        );
       } else if (session.step === 'awaiting_image') {
         // Don't overwrite text with caption if text was already set
         if (msg.caption && !session.postDraft.text) {
           session.postDraft.text = messageToHtml(msg.caption, msg.caption_entities);
         }
         session.postDraft.imageUrl = imageUrl;
-        session.step = 'awaiting_facebook_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
+        // Skip social links - use channel settings instead
+        session.step = 'confirm_create';
+        const d2 = session.postDraft;
+        const settings2 = getChannelSettings();
+        bot.sendMessage(msg.chat.id,
+          `📋 Post preview:\n\n` +
+          `Text: ${stripHtml(d2.text || '').substring(0, 100)}\n` +
+          `Image: ${d2.imageUrl ? '✅' : '❌'}\n` +
+          `Details: ${d2.detailsText ? '✅' : '❌'}\n` +
+          `TG: ${settings2.facebook_link || '—'}\n` +
+          `X: ${settings2.twitter_link || '—'}\n` +
+          `IG: ${settings2.instagram_link || '—'}\n\n` +
+          `Send YES to publish, or /cancel.`,
+          { reply_markup: yesNoKeyboard }
+        );
       } else {
         const editId = session.editPostId!;
         updatePost(editId, { imageUrl });
@@ -627,16 +705,42 @@ export function registerHandlers(bot: TelegramBot) {
           session.postDraft.text = messageToHtml(msg.caption, msg.caption_entities);
         }
         session.postDraft.imageUrl = videoUrl; // Store video URL in imageUrl field
-        session.step = 'awaiting_facebook_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
+        // Skip social links - use channel settings instead
+        session.step = 'confirm_create';
+        const d1 = session.postDraft;
+        const settings1 = getChannelSettings();
+        bot.sendMessage(msg.chat.id,
+          `📋 Post preview:\n\n` +
+          `Text: ${stripHtml(d1.text || '').substring(0, 100)}\n` +
+          `Image: ${d1.imageUrl ? '✅' : '❌'}\n` +
+          `Details: ${d1.detailsText ? '✅' : '❌'}\n` +
+          `TG: ${settings1.facebook_link || '—'}\n` +
+          `X: ${settings1.twitter_link || '—'}\n` +
+          `IG: ${settings1.instagram_link || '—'}\n\n` +
+          `Send YES to publish, or /cancel.`,
+          { reply_markup: yesNoKeyboard }
+        );
       } else if (session.step === 'awaiting_image') {
         // Don't overwrite text with caption if text was already set
         if (msg.caption && !session.postDraft.text) {
           session.postDraft.text = messageToHtml(msg.caption, msg.caption_entities);
         }
         session.postDraft.imageUrl = videoUrl; // Store video URL in imageUrl field
-        session.step = 'awaiting_facebook_link';
-        bot.sendMessage(msg.chat.id, '🔗 Send FACEBOOK link (or "skip"):', { reply_markup: skipKeyboard });
+        // Skip social links - use channel settings instead
+        session.step = 'confirm_create';
+        const d2 = session.postDraft;
+        const settings2 = getChannelSettings();
+        bot.sendMessage(msg.chat.id,
+          `📋 Post preview:\n\n` +
+          `Text: ${stripHtml(d2.text || '').substring(0, 100)}\n` +
+          `Image: ${d2.imageUrl ? '✅' : '❌'}\n` +
+          `Details: ${d2.detailsText ? '✅' : '❌'}\n` +
+          `TG: ${settings2.facebook_link || '—'}\n` +
+          `X: ${settings2.twitter_link || '—'}\n` +
+          `IG: ${settings2.instagram_link || '—'}\n\n` +
+          `Send YES to publish, or /cancel.`,
+          { reply_markup: yesNoKeyboard }
+        );
       } else {
         const editId = session.editPostId!;
         updatePost(editId, { imageUrl: videoUrl });
