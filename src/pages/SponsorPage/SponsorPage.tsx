@@ -20,9 +20,10 @@ interface SponsorPageProps {
   markAsRead: (id: number) => void;
   readIds: Set<number>;
   unreadCount: number;
+  onFacebookClick?: () => void;
 }
 
-function SponsorPage({ onTabChange, posts, postsLoading, loadingMore, postsError, hasMore, loadMore, refetchPosts, markAsRead, readIds, unreadCount }: SponsorPageProps) {
+function SponsorPage({ onTabChange, posts, postsLoading, loadingMore, postsError, hasMore, loadMore, refetchPosts, markAsRead, readIds, unreadCount, onFacebookClick }: SponsorPageProps) {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [showChannel, setShowChannel] = useState(false);
   const observeRef = usePostVisibilityTracker(markAsRead);
@@ -164,6 +165,7 @@ function SponsorPage({ onTabChange, posts, postsLoading, loadingMore, postsError
               ref={observeRef}
               post={post}
               onDetailsClick={(p) => setSelectedPost(p)}
+              onFacebookClick={onFacebookClick}
             />
           ))}
         </div>

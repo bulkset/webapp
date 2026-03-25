@@ -6,9 +6,10 @@ interface EnergyBarProps {
   fillPercent?: number;
   label?: string;
   onPlusClick?: () => void;
+  onBoostClick?: () => void;
 }
 
-function EnergyBar({ current, max, fillPercent, label, onPlusClick }: EnergyBarProps) {
+function EnergyBar({ current, max, fillPercent, label, onPlusClick, onBoostClick }: EnergyBarProps) {
   const percentage = fillPercent ?? (current / max) * 100;
 
   return (
@@ -53,6 +54,18 @@ function EnergyBar({ current, max, fillPercent, label, onPlusClick }: EnergyBarP
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M6 1V6M6 11V6M6 6H11H1" stroke="#FFDB02" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        )}
+
+        {onBoostClick && (
+          <button
+            className="w-[25px] h-[25px] rounded-[7px] bg-[#00af42] flex items-center justify-center shrink-0 transition-all duration-100 active:scale-90 active:brightness-90 ml-2"
+            aria-label={t.energyBar.boost}
+            onClick={onBoostClick}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         )}

@@ -73,6 +73,7 @@
   },
 
   "energyBar": {
-    "addEnergy": "Añadir energía"
+    "addEnergy": "Añadir energía",
+    "boost": "Boost energía"
   }
 }

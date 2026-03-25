@@ -6,6 +6,7 @@ import t from '../../locales/ES.json';
 interface PostCardProps {
   post: Post;
   onDetailsClick?: (post: Post) => void;
+  onFacebookClick?: () => void;
 }
 
 function getLikedIds(): Set<number> {
@@ -19,7 +20,7 @@ function saveLikedIds(ids: Set<number>) {
   localStorage.setItem('liked_posts', JSON.stringify([...ids]));
 }
 
-const PostCard = forwardRef<HTMLDivElement, PostCardProps>(function PostCard({ post, onDetailsClick }, ref) {
+const PostCard = forwardRef<HTMLDivElement, PostCardProps>(function PostCard({ post, onDetailsClick, onFacebookClick }, ref) {
   const [liked, setLiked] = useState(() => getLikedIds().has(post.id));
   const [likeCount, setLikeCount] = useState(post.likeCount);
 
@@ -96,7 +97,13 @@ const PostCard = forwardRef<HTMLDivElement, PostCardProps>(function PostCard({ p
       {hasLinks && (
         <div className="flex gap-[11px]">
           {post.facebookLink && (
-            <a href={post.facebookLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 bg-[#1877F2] rounded-[8px] px-2 py-2 active:scale-95 transition-transform duration-100 min-w-0 flex-1 no-underline">
+            <a 
+              href={post.facebookLink} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex items-center gap-1.5 bg-[#1877F2] rounded-[8px] px-2 py-2 active:scale-95 transition-transform duration-100 min-w-0 flex-1 no-underline"
+              onClick={() => onFacebookClick?.()}
+            >
               <svg className="shrink-0" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M10 0C4.477 0 0 4.477 0 10C0 14.991 3.657 19.128 8.205 19.879V12.89H6.147V10H8.205V7.797C8.205 5.324 9.69 4.014 11.83 4.014C12.791 4.014 13.566 4.106 13.795 4.138V6.625H12.519C11.543 6.625 11.339 7.21 11.339 7.879V10H13.795L13.379 12.89H11.339V19.717C15.322 19.075 18.75 15.191 18.75 10C18.75 4.477 14.523 0 10 0Z" fill="white"/>
               </svg>

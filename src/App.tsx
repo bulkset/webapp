@@ -58,7 +58,7 @@ document.addEventListener('click', (e) => {
   if (target.closest('button, a, [role="button"]')) vibrate();
 }, { passive: true });
 
-const BASE_ENERGY = 30;
+const BASE_ENERGY = 20;
 const UNLOCKED_ENERGY = 50;
 const ENERGY_REGEN_MS = 2 * 60 * 1000; // 1 energy per 2 minutes
 
@@ -164,12 +164,24 @@ function App() {
 
   const handleUnlockSponsor = useCallback(() => {
     setSponsorUnlocked(true);
+    setEnergy(UNLOCKED_ENERGY);
     setActiveTab('sponsor');
   }, []);
 
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
   }, []);
+
+  // Boost energy to 50 when user subscribes to channel
+  const handleBoostEnergy = useCallback(() => {
+    if (!sponsorUnlocked) {
+      setSponsorUnlocked(true);
+      // Set energy to 50 immediately when boosting
+      setEnergy(UNLOCKED_ENERGY);
+    } else if (energy < UNLOCKED_ENERGY) {
+      setEnergy(UNLOCKED_ENERGY);
+    }
+  }, [sponsorUnlocked, energy]);
 
   return (
     <div className="mx-auto h-dvh relative overflow-hidden">
@@ -184,6 +196,7 @@ function App() {
           sponsorUnlocked={sponsorUnlocked}
           onUnlockSponsor={handleUnlockSponsor}
           sponsorBadge={unread}
+          onBoostClick={handleBoostEnergy}
         />
       </div>
       <div className={activeTab !== 'withdraw' ? 'hidden' : ''}>
@@ -207,6 +220,7 @@ function App() {
           markAsRead={markAsRead}
           readIds={readIds}
           unreadCount={unread}
+          onFacebookClick={handleBoostEnergy}
         />
       )}
     </div>
