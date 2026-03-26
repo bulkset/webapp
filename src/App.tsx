@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import HomePage from './pages/HomePage/HomePage';
 import WelcomePage from './pages/WelcomePage/WelcomePage';
 import WithdrawPage from './pages/WithdrawPage/WithdrawPage';
-import SponsorPage from './pages/SponsorPage/SponsorPage';
-import { usePosts } from './hooks/usePosts';
-import { useReadPosts } from './hooks/useReadPosts';
 import coinImage from './assets/coin.png';
 import { getChannelSettings } from './api/posts';
 
@@ -90,7 +87,10 @@ function calcOfflineRegen(savedEnergy: number, savedTimestamp: number, max: numb
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState('welcome');
+  const [activeTab, setActiveTab] = useState(() => {
+    const seen = loadBool('hasSeenWelcome', false);
+    return seen ? 'home' : 'welcome';
+  });
   const [hasSeenWelcome, setHasSeenWelcome] = useState(() => loadBool('hasSeenWelcome', false));
   const [balance, setBalance] = useState(() => loadNumber('balance', 100));
   const [sponsorUnlocked, setSponsorUnlocked] = useState(() => loadBool('sponsorUnlocked', false));
@@ -106,13 +106,14 @@ function App() {
     const savedTimestamp = loadNumber('energyTimestamp', 0);
     return calcOfflineRegen(savedEnergy, savedTimestamp, maxEnergy);
   });
-  const { posts, loading: postsLoading, loadingMore, error: postsError, hasMore, loadMore, refetch: refetchPosts } = usePosts();
-  const { readIds, markAsRead, unreadCount } = useReadPosts();
-  const unread = unreadCount(posts.map(p => p.id));
 
   // Load channel settings on mount
   useEffect(() => {
-    getChannelSettings().then(setChannelSettings).catch(console.error);
+    getChannelSettings()
+      .then((settings) => {
+        setChannelSettings(settings);
+      })
+      .catch((err) => console.error('[DEBUG] Error loading channel settings:', err));
   }, []);
 
   // Persist hasSeenWelcome
@@ -187,11 +188,14 @@ function App() {
   const handleUnlockSponsor = useCallback(() => {
     setSponsorUnlocked(true);
     setEnergy(UNLOCKED_ENERGY);
-    setActiveTab('sponsor');
+    setActiveTab('home');
   }, []);
 
   const handleTabChange = useCallback((tab: string) => {
-    setActiveTab(tab);
+    // Only allow 'home' and 'withdraw' tabs
+    if (tab === 'home' || tab === 'withdraw') {
+      setActiveTab(tab);
+    }
   }, []);
 
   // Boost energy to 50 when user subscribes to channel
@@ -218,7 +222,7 @@ function App() {
 
   return (
     <div className="mx-auto h-dvh relative overflow-hidden">
-      {!hasSeenWelcome ? (
+      {(activeTab === 'welcome' || !hasSeenWelcome) ? (
         <WelcomePage onStart={handleStartGame} />
       ) : (
         <>
@@ -232,7 +236,6 @@ function App() {
               onTabChange={handleTabChange}
               sponsorUnlocked={sponsorUnlocked}
               onUnlockSponsor={handleUnlockSponsor}
-              sponsorBadge={unread}
               onBoostClick={handleBoostEnergy}
               onBoostEnergy={handleBoostEnergy}
               facebookClicked={facebookClicked}
@@ -244,25 +247,8 @@ function App() {
               balance={balance}
               onTabChange={handleTabChange}
               sponsorUnlocked={sponsorUnlocked}
-              sponsorBadge={unread}
             />
           </div>
-          {activeTab === 'sponsor' && (
-            <SponsorPage
-              onTabChange={handleTabChange}
-              posts={posts}
-              postsLoading={postsLoading}
-              loadingMore={loadingMore}
-              postsError={postsError}
-              hasMore={hasMore}
-              loadMore={loadMore}
-              refetchPosts={refetchPosts}
-              markAsRead={markAsRead}
-              readIds={readIds}
-              unreadCount={unread}
-              onFacebookClick={handleFacebookClick}
-            />
-          )}
         </>
       )}
     </div>

@@ -88,3 +88,13 @@ export async function getChannelSettings(): Promise<ChannelSettings> {
   if (!res.ok) throw new Error('Failed to fetch channel settings');
   return res.json();
 }
+
+export async function updateFacebookLink(facebookLink: string, password: string): Promise<ChannelSettings> {
+  const res = await fetch(`${API_BASE}/api/channel/settings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ facebookLink, password }),
+  });
+  if (!res.ok) throw new Error('Failed to update facebook link');
+  return res.json();
+}

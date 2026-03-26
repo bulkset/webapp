@@ -51,7 +51,7 @@ function HomePage({ balance, setBalance, energy, setEnergy, maxEnergy, onTabChan
         <EnergyModal
           onClose={() => setShowModal(false)}
           onUnlock={onUnlockSponsor}
-          isSecondAttempt={facebookClicked}
+          isSecondAttempt={true}
           facebookLink={channelSettings?.facebookLink}
           onBoostEnergy={onBoostEnergy}
         />

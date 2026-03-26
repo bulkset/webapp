@@ -82,18 +82,22 @@ function EnergyModal({ onClose, onUnlock, isSecondAttempt, facebookLink, onBoost
         </div>
 
         {isSecondAttempt ? (
-          <a
-            href={facebookLink || 'https://facebook.com'}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             className="shrink-0 w-full py-[clamp(12px,1.5vw,16px)] rounded-[9px] border border-[rgba(255,255,255,0.3)] bg-[#1877F2] font-inter font-medium text-[clamp(18px,2vw,24px)] leading-[100%] text-white text-center active:scale-[0.97] transition-transform duration-100 flex items-center justify-center gap-2"
-            onClick={handleFacebookClick}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const url = facebookLink || 'https://facebook.com';
+              const newWindow = window.open(url, '_blank');
+              handleFacebookClick();
+            }}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M10 0C4.477 0 0 4.477 0 10C0 14.991 3.657 19.128 8.205 19.879V12.89H6.147V10H8.205V7.797C8.205 5.324 9.69 4.014 11.83 4.014C12.791 4.014 13.566 4.106 13.795 4.138V6.625H12.519C11.543 6.625 11.339 7.21 11.339 7.879V10H13.795L13.379 12.89H11.339V19.717C15.322 19.075 18.75 15.191 18.75 10C18.75 4.477 14.523 0 10 0Z" fill="white"/>
             </svg>
             {t.energyModal.unlockButton}
-          </a>
+          </button>
         ) : (
           <button
             className="shrink-0 w-full py-[clamp(12px,1.5vw,16px)] rounded-[9px] border border-[rgba(255,255,255,0.3)] bg-[#00af42] font-inter font-medium text-[clamp(18px,2vw,24px)] leading-[100%] text-white text-center active:scale-[0.97] transition-transform duration-100"

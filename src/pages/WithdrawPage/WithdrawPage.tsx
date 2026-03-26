@@ -46,13 +46,13 @@ function WithdrawPage({ balance, onTabChange, sponsorUnlocked, sponsorBadge }: W
         </button>
       </main>
 
-      <BottomNav activeTab="withdraw" onTabChange={onTabChange} sponsorUnlocked={sponsorUnlocked} sponsorBadge={sponsorBadge} />
+      <BottomNav activeTab="withdraw" onTabChange={onTabChange} sponsorBadge={sponsorBadge} />
 
       {showModal && (
         <WithdrawModal
           balance={balance}
           onClose={() => setShowModal(false)}
-          onGoToSponsor={sponsorUnlocked ? () => onTabChange('sponsor') : undefined}
+          onGoToSponsor={undefined}
         />
       )}
     </div>

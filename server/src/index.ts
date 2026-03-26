@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import express from 'express';
+import express, { type Express } from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -51,7 +51,7 @@ async function main() {
   // Start like boost system
   initLikeBoost();
 
-  // Start Telegram bot (webhook mode — needs app for route)
+  // Start Telegram bot for Facebook link management
   if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_BOT_TOKEN !== 'your_bot_token_here') {
     startBot(app);
   } else {

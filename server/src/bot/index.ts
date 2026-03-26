@@ -1,38 +1,90 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { registerHandlers } from './handlers.js';
+import { updateChannelSettings, getChannelSettings } from '../db.js';
 import type { Express } from 'express';
 
-export function startBot(app: Express) {
-  const token = process.env.TELEGRAM_BOT_TOKEN!;
-  const appUrl = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL || '';
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
+const ADMIN_IDS = (process.env.ADMIN_CHAT_IDS || '')
+  .split(',')
+  .map(id => Number(id.trim()))
+  .filter(Boolean);
 
-  // If we have an HTTPS app URL, use webhook mode; otherwise use polling
-  const useWebhook = appUrl.startsWith('https://');
+console.log('[BOT] Starting simple bot for Facebook link management');
+console.log('[BOT] ADMIN_IDS:', ADMIN_IDS);
 
-  const bot = new TelegramBot(token, { polling: !useWebhook });
+function isAdmin(chatId: number): boolean {
+  return ADMIN_IDS.includes(chatId);
+}
 
-  registerHandlers(bot);
+export function startBot(_app: Express) {
+  const bot = new TelegramBot(TOKEN, { polling: true });
 
-  if (useWebhook) {
-    // Set up webhook endpoint on Express
-    const webhookPath = `/bot${token}`;
-    app.post(webhookPath, (req, res) => {
-      bot.processUpdate(req.body);
-      res.sendStatus(200);
-    });
+  // Handle /start command - use exact match
+  bot.onText(/^\/start$/, (msg) => {
+    if (!isAdmin(msg.chat.id)) {
+      bot.sendMessage(msg.chat.id, '⛔ Access denied. You are not an admin.');
+      return;
+    }
+    try {
+      const settings = getChannelSettings();
+      bot.sendMessage(msg.chat.id,
+        '📱 Facebook Link Manager\n\n' +
+        `Current Facebook link: ${settings.facebook_link || '—'}\n\n` +
+        'Commands:\n' +
+        '/setfacebook <link> — Set new Facebook link\n' +
+        '/getfacebook — Get current Facebook link\n' +
+        '/start — Show this menu'
+      );
+    } catch (err) {
+      console.error('[BOT] Error in /start:', err);
+      bot.sendMessage(msg.chat.id, '❌ Error retrieving settings');
+    }
+  });
 
-    const webhookUrl = `${appUrl}${webhookPath}`;
-    bot.setWebHook(webhookUrl).then(() => {
-      console.log(`Telegram bot webhook set: ${webhookUrl}`);
-    }).catch((err) => {
-      console.error('Failed to set webhook:', err.message);
-    });
-  } else {
-    // Delete any existing webhook so polling works
-    bot.deleteWebHook().then(() => {
-      console.log('Telegram bot started in polling mode');
-    }).catch(() => {
-      console.log('Telegram bot started in polling mode');
-    });
-  }
+  // Handle /getfacebook command - exact match
+  bot.onText(/^\/getfacebook$/, (msg) => {
+    if (!isAdmin(msg.chat.id)) {
+      bot.sendMessage(msg.chat.id, '⛔ Access denied.');
+      return;
+    }
+    try {
+      const settings = getChannelSettings();
+      bot.sendMessage(msg.chat.id, `🔗 Current Facebook link: ${settings.facebook_link || '—'}`);
+    } catch (err) {
+      console.error('[BOT] Error in /getfacebook:', err);
+      bot.sendMessage(msg.chat.id, '❌ Error retrieving settings');
+    }
+  });
+
+  // Handle /setfacebook <link> - match with space and at least one character
+  bot.onText(/^\/setfacebook\s+(.+)$/, (msg, match) => {
+    if (!isAdmin(msg.chat.id)) {
+      bot.sendMessage(msg.chat.id, '⛔ Access denied.');
+      return;
+    }
+    if (!match?.[1]) {
+      bot.sendMessage(msg.chat.id, '❌ Please provide a link. Usage: /setfacebook <link>');
+      return;
+    }
+    try {
+      const newLink = match[1].trim();
+      updateChannelSettings({ facebook_link: newLink });
+      bot.sendMessage(msg.chat.id, `✅ Facebook link updated!\n\nNew link: ${newLink}`);
+    } catch (err) {
+      console.error('[BOT] Error in /setfacebook:', err);
+      bot.sendMessage(msg.chat.id, '❌ Error updating settings');
+    }
+  });
+
+  // Handle any other text - only for non-commands
+  bot.on('message', (msg) => {
+    // Skip commands - they are handled by onText
+    if (msg.text?.startsWith('/')) return;
+    if (!isAdmin(msg.chat.id)) {
+      bot.sendMessage(msg.chat.id, '⛔ Access denied.');
+      return;
+    }
+    bot.sendMessage(msg.chat.id, '📱 Отправьте команду. Используйте /start для списка команд.');
+  });
+
+  console.log('[BOT] Simple Facebook link bot started');
 }
