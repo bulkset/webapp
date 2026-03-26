@@ -1,6 +1,24 @@
 {
   "currency": "EUR",
 
+  "welcome": {
+    "title": "Bienvenido al bot que te ayuda a ganar dinero real!",
+    "subtitle": "Juega, gana dinero real y transfiérelo a tu tarjeta bancaria! Es fácil y accesible para todos gracias a este bot y a nuestros patrocinadores!",
+    "howToEarn": {
+      "title": "Cómo ganar",
+      "desc": "Toca la pantalla para recoger todo el dinero que puedas! Cuanto más toques, más ganarás!"
+    },
+    "inviteFriends": {
+      "title": "Invita a tus amigos",
+      "desc": "Juega con tus amigos y gana recompensas! Comparte, compite y gana juntos"
+    },
+    "advantages": {
+      "title": "Ventajas",
+      "desc": "Mejora tu experiencia de juego! Aumenta tu velocidad y gana más"
+    },
+    "startButton": "Empezar a ganar dinero"
+  },
+
   "nav": {
     "home": "INICIO",
     "withdraw": "RETIRO",
@@ -36,10 +54,13 @@
   },
 
   "energyModal": {
-    "title": "Más energía de 30 a 50 ⚡",
-    "description": "¡Desbloquea el blog del patrocinador y obtén la oportunidad de ganar el doble de dinero!",
-    "unlockButton": "Desbloquear",
-    "sponsorAlt": "Patrocinador"
+    "title": "Duplica tu energía 20 - 50⚡️",
+    "description": "¡Suscríbete al canal de Facebook del patrocinador y obtén casi tres veces más energía y gana tres veces más rápido!",
+    "unlockButton": "Seguirnos en Facebook",
+    "sponsorAlt": "Patrocinador",
+    "titleSecond": "Ya has agotado todos los intentos; suscríbete al canal del patrocinador:",
+    "descriptionSecond": "cuenta con más de 14 años de experiencia en trading y criptomonedas y te ayudará a ganar dinero ahora mismo!",
+    "channelName": "Martín Soler García"
   },
 
   "withdrawModal": {

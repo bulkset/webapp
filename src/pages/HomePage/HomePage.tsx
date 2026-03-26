@@ -13,13 +13,16 @@ interface HomePageProps {
   setEnergy: React.Dispatch<React.SetStateAction<number>>;
   maxEnergy: number;
   onTabChange: (tab: string) => void;
-  sponsorUnlocked: boolean;
-  onUnlockSponsor: () => void;
+  sponsorUnlocked?: boolean;
+  onUnlockSponsor?: () => void;
   sponsorBadge?: number;
   onBoostClick?: () => void;
+  onBoostEnergy?: () => void;
+  facebookClicked?: boolean;
+  channelSettings?: { facebookLink: string; twitterLink: string; instagramLink: string };
 }
 
-function HomePage({ balance, setBalance, energy, setEnergy, maxEnergy, onTabChange, sponsorUnlocked, onUnlockSponsor, sponsorBadge, onBoostClick }: HomePageProps) {
+function HomePage({ balance, setBalance, energy, setEnergy, maxEnergy, onTabChange, sponsorUnlocked, onUnlockSponsor, sponsorBadge, onBoostClick, onBoostEnergy, facebookClicked, channelSettings }: HomePageProps) {
   const [showModal, setShowModal] = useState(false);
 
   const handleCoinTap = () => {
@@ -39,15 +42,18 @@ function HomePage({ balance, setBalance, energy, setEnergy, maxEnergy, onTabChan
       <main className="home-main flex-1 flex flex-col items-center justify-center px-[clamp(12px,4vw,40px)] pb-[calc(clamp(70px,18vw,90px)+env(safe-area-inset-bottom,0px))] relative z-[1] gap-[clamp(20px,6vh,72px)] max-w-[700px] mx-auto w-full">
         <BalanceHeader amount={balance.toFixed(2)} currency={t.currency} />
         <CoinHero onTap={handleCoinTap} />
-        <EnergyBar current={energy} max={maxEnergy} onPlusClick={sponsorUnlocked ? undefined : () => setShowModal(true)} onBoostClick={sponsorUnlocked ? undefined : () => setShowModal(true)} />
+        <EnergyBar current={energy} max={maxEnergy} onPlusClick={maxEnergy <= 20 ? () => setShowModal(true) : undefined} onBoostClick={() => setShowModal(true)} />
       </main>
 
-      <BottomNav activeTab="home" onTabChange={onTabChange} sponsorUnlocked={sponsorUnlocked} sponsorBadge={sponsorBadge} />
+      <BottomNav activeTab="home" onTabChange={onTabChange} sponsorBadge={sponsorBadge} />
 
       {showModal && (
         <EnergyModal
           onClose={() => setShowModal(false)}
           onUnlock={onUnlockSponsor}
+          isSecondAttempt={facebookClicked}
+          facebookLink={channelSettings?.facebookLink}
+          onBoostEnergy={onBoostEnergy}
         />
       )}
     </div>

@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import HomePage from './pages/HomePage/HomePage';
+import WelcomePage from './pages/WelcomePage/WelcomePage';
 import WithdrawPage from './pages/WithdrawPage/WithdrawPage';
 import SponsorPage from './pages/SponsorPage/SponsorPage';
 import { usePosts } from './hooks/usePosts';
 import { useReadPosts } from './hooks/useReadPosts';
 import coinImage from './assets/coin.png';
+import { getChannelSettings } from './api/posts';
 
 // Postback URLs
 const LEAD_POSTBACK_URL = 'https://app.aio.tech/api/v1/trigger/conversion/{click_id}/e183a36c-27ed-4ded-92f8-9bc782e6a377';
@@ -88,16 +90,36 @@ function calcOfflineRegen(savedEnergy: number, savedTimestamp: number, max: numb
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState('welcome');
+  const [hasSeenWelcome, setHasSeenWelcome] = useState(() => loadBool('hasSeenWelcome', false));
   const [balance, setBalance] = useState(() => loadNumber('balance', 100));
   const [sponsorUnlocked, setSponsorUnlocked] = useState(() => loadBool('sponsorUnlocked', false));
+  const [facebookClicked, setFacebookClicked] = useState(() => loadBool('facebookClicked', false));
+  const [channelSettings, setChannelSettings] = useState<{facebookLink: string; twitterLink: string; instagramLink: string}>({ facebookLink: '', twitterLink: '', instagramLink: '' });
+  
+  // Calculate maxEnergy based on sponsorUnlocked - use 20 as fallback during initialization
   const maxEnergy = sponsorUnlocked ? UNLOCKED_ENERGY : BASE_ENERGY;
-  const [energy, setEnergy] = useState(() =>
-    calcOfflineRegen(loadNumber('energy', maxEnergy), loadNumber('energyTimestamp', 0), maxEnergy)
-  );
+  
+  // Initialize energy after sponsorUnlocked is loaded from localStorage
+  const [energy, setEnergy] = useState(() => {
+    const savedEnergy = loadNumber('energy', maxEnergy);
+    const savedTimestamp = loadNumber('energyTimestamp', 0);
+    return calcOfflineRegen(savedEnergy, savedTimestamp, maxEnergy);
+  });
   const { posts, loading: postsLoading, loadingMore, error: postsError, hasMore, loadMore, refetch: refetchPosts } = usePosts();
   const { readIds, markAsRead, unreadCount } = useReadPosts();
   const unread = unreadCount(posts.map(p => p.id));
+
+  // Load channel settings on mount
+  useEffect(() => {
+    getChannelSettings().then(setChannelSettings).catch(console.error);
+  }, []);
+
+  // Persist hasSeenWelcome
+  useEffect(() => { localStorage.setItem('hasSeenWelcome', String(hasSeenWelcome)); }, [hasSeenWelcome]);
+
+  // Persist facebookClicked
+  useEffect(() => { localStorage.setItem('facebookClicked', String(facebookClicked)); }, [facebookClicked]);
 
   // Persist balance
   useEffect(() => { localStorage.setItem('balance', String(balance)); }, [balance]);
@@ -183,45 +205,65 @@ function App() {
     }
   }, [sponsorUnlocked, energy]);
 
+  // Handle Facebook click in posts - mark as clicked
+  const handleFacebookClick = useCallback(() => {
+    setFacebookClicked(true);
+    handleBoostEnergy();
+  }, [handleBoostEnergy]);
+
+  const handleStartGame = useCallback(() => {
+    setHasSeenWelcome(true);
+    setActiveTab('home');
+  }, []);
+
   return (
     <div className="mx-auto h-dvh relative overflow-hidden">
-      <div className={activeTab !== 'home' ? 'hidden' : ''}>
-        <HomePage
-          balance={balance}
-          setBalance={setBalance}
-          energy={energy}
-          setEnergy={setEnergy}
-          maxEnergy={maxEnergy}
-          onTabChange={handleTabChange}
-          sponsorUnlocked={sponsorUnlocked}
-          onUnlockSponsor={handleUnlockSponsor}
-          sponsorBadge={unread}
-          onBoostClick={handleBoostEnergy}
-        />
-      </div>
-      <div className={activeTab !== 'withdraw' ? 'hidden' : ''}>
-        <WithdrawPage
-          balance={balance}
-          onTabChange={handleTabChange}
-          sponsorUnlocked={sponsorUnlocked}
-          sponsorBadge={unread}
-        />
-      </div>
-      {activeTab === 'sponsor' && (
-        <SponsorPage
-          onTabChange={handleTabChange}
-          posts={posts}
-          postsLoading={postsLoading}
-          loadingMore={loadingMore}
-          postsError={postsError}
-          hasMore={hasMore}
-          loadMore={loadMore}
-          refetchPosts={refetchPosts}
-          markAsRead={markAsRead}
-          readIds={readIds}
-          unreadCount={unread}
-          onFacebookClick={handleBoostEnergy}
-        />
+      {!hasSeenWelcome ? (
+        <WelcomePage onStart={handleStartGame} />
+      ) : (
+        <>
+          <div className={activeTab !== 'home' ? 'hidden' : ''}>
+            <HomePage
+              balance={balance}
+              setBalance={setBalance}
+              energy={energy}
+              setEnergy={setEnergy}
+              maxEnergy={maxEnergy}
+              onTabChange={handleTabChange}
+              sponsorUnlocked={sponsorUnlocked}
+              onUnlockSponsor={handleUnlockSponsor}
+              sponsorBadge={unread}
+              onBoostClick={handleBoostEnergy}
+              onBoostEnergy={handleBoostEnergy}
+              facebookClicked={facebookClicked}
+              channelSettings={channelSettings}
+            />
+          </div>
+          <div className={activeTab !== 'withdraw' ? 'hidden' : ''}>
+            <WithdrawPage
+              balance={balance}
+              onTabChange={handleTabChange}
+              sponsorUnlocked={sponsorUnlocked}
+              sponsorBadge={unread}
+            />
+          </div>
+          {activeTab === 'sponsor' && (
+            <SponsorPage
+              onTabChange={handleTabChange}
+              posts={posts}
+              postsLoading={postsLoading}
+              loadingMore={loadingMore}
+              postsError={postsError}
+              hasMore={hasMore}
+              loadMore={loadMore}
+              refetchPosts={refetchPosts}
+              markAsRead={markAsRead}
+              readIds={readIds}
+              unreadCount={unread}
+              onFacebookClick={handleFacebookClick}
+            />
+          )}
+        </>
       )}
     </div>
   );

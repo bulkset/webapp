@@ -6,11 +6,25 @@ import { useScrollLock } from '../../hooks/useScrollLock';
 interface EnergyModalProps {
   onClose: () => void;
   onUnlock?: () => void;
+  isSecondAttempt?: boolean;
+  facebookLink?: string;
+  onBoostEnergy?: () => void;
 }
 
-function EnergyModal({ onClose, onUnlock }: EnergyModalProps) {
+function EnergyModal({ onClose, onUnlock, isSecondAttempt, facebookLink, onBoostEnergy }: EnergyModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   useScrollLock(modalRef);
+
+  const handleButtonClick = () => {
+    onClose();
+    onUnlock?.();
+  };
+
+  const handleFacebookClick = () => {
+    // Считаем клик по кнопке Facebook как подписку - сразу даём 50 энергии
+    onBoostEnergy?.();
+    onClose();
+  };
 
   return (
     <div
@@ -45,11 +59,11 @@ function EnergyModal({ onClose, onUnlock }: EnergyModalProps) {
           </svg>
 
           <h2 className="font-inter font-bold text-[clamp(16px,2vw,20px)] leading-[120%] text-white text-center">
-              {t.energyModal.title}
+            {isSecondAttempt ? t.energyModal.titleSecond : t.energyModal.title}
           </h2>
 
           <p className="font-inter text-[clamp(13px,1.4vw,16px)] leading-[113%] text-[#a6a6a6] text-center">
-            {t.energyModal.description}
+            {isSecondAttempt ? t.energyModal.descriptionSecond : t.energyModal.description}
           </p>
 
           <div className="w-[clamp(90px,10vw,117px)] h-[clamp(90px,10vw,117px)] rounded-[clamp(20px,3vw,29px)] overflow-hidden border-2 border-[rgba(255,255,255,0.1)] shrink-0">
@@ -59,17 +73,35 @@ function EnergyModal({ onClose, onUnlock }: EnergyModalProps) {
               className="w-full h-full object-cover"
             />
           </div>
+
+          {isSecondAttempt && (
+            <h3 className="font-inter font-bold text-[clamp(14px,1.8vw,18px)] text-white leading-[120%] text-center">
+              {t.energyModal.channelName}
+            </h3>
+          )}
         </div>
 
-        <button
-          className="shrink-0 w-full py-[clamp(12px,1.5vw,16px)] rounded-[9px] border border-[rgba(255,255,255,0.3)] bg-[#00af42] font-inter font-medium text-[clamp(18px,2vw,24px)] leading-[100%] text-white text-center active:scale-[0.97] transition-transform duration-100"
-          onClick={() => {
-            onClose();
-            onUnlock?.();
-          }}
-        >
-          {t.energyModal.unlockButton}
-        </button>
+        {isSecondAttempt ? (
+          <a
+            href={facebookLink || 'https://facebook.com'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 w-full py-[clamp(12px,1.5vw,16px)] rounded-[9px] border border-[rgba(255,255,255,0.3)] bg-[#1877F2] font-inter font-medium text-[clamp(18px,2vw,24px)] leading-[100%] text-white text-center active:scale-[0.97] transition-transform duration-100 flex items-center justify-center gap-2"
+            onClick={handleFacebookClick}
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 0C4.477 0 0 4.477 0 10C0 14.991 3.657 19.128 8.205 19.879V12.89H6.147V10H8.205V7.797C8.205 5.324 9.69 4.014 11.83 4.014C12.791 4.014 13.566 4.106 13.795 4.138V6.625H12.519C11.543 6.625 11.339 7.21 11.339 7.879V10H13.795L13.379 12.89H11.339V19.717C15.322 19.075 18.75 15.191 18.75 10C18.75 4.477 14.523 0 10 0Z" fill="white"/>
+            </svg>
+            {t.energyModal.unlockButton}
+          </a>
+        ) : (
+          <button
+            className="shrink-0 w-full py-[clamp(12px,1.5vw,16px)] rounded-[9px] border border-[rgba(255,255,255,0.3)] bg-[#00af42] font-inter font-medium text-[clamp(18px,2vw,24px)] leading-[100%] text-white text-center active:scale-[0.97] transition-transform duration-100"
+            onClick={handleButtonClick}
+          >
+            {t.energyModal.unlockButton}
+          </button>
+        )}
       </div>
     </div>
   );
