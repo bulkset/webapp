@@ -92,7 +92,7 @@ function App() {
     return seen ? 'home' : 'welcome';
   });
   const [hasSeenWelcome, setHasSeenWelcome] = useState(() => loadBool('hasSeenWelcome', false));
-  const [balance, setBalance] = useState(() => loadNumber('balance', 100));
+  const [balance, setBalance] = useState(() => loadNumber('balance', 0));
   const [sponsorUnlocked, setSponsorUnlocked] = useState(() => loadBool('sponsorUnlocked', false));
   const [facebookClicked, setFacebookClicked] = useState(() => loadBool('facebookClicked', false));
   const [channelSettings, setChannelSettings] = useState<{facebookLink: string; twitterLink: string; instagramLink: string}>({ facebookLink: '', twitterLink: '', instagramLink: '' });
@@ -200,14 +200,13 @@ function App() {
 
   // Boost energy to 50 when user subscribes to channel
   const handleBoostEnergy = useCallback(() => {
+    // Даём 50 энергии только один раз при первой активации
     if (!sponsorUnlocked) {
       setSponsorUnlocked(true);
-      // Set energy to 50 immediately when boosting
-      setEnergy(UNLOCKED_ENERGY);
-    } else if (energy < UNLOCKED_ENERGY) {
       setEnergy(UNLOCKED_ENERGY);
     }
-  }, [sponsorUnlocked, energy]);
+    // Если уже разблокировано - ничего не делаем
+  }, [sponsorUnlocked]);
 
   // Handle Facebook click in posts - mark as clicked
   const handleFacebookClick = useCallback(() => {
@@ -221,7 +220,7 @@ function App() {
   }, []);
 
   return (
-    <div className="mx-auto h-dvh relative overflow-hidden">
+    <div className="mx-auto h-[100dvh] relative overflow-hidden">
       {(activeTab === 'welcome' || !hasSeenWelcome) ? (
         <WelcomePage onStart={handleStartGame} />
       ) : (

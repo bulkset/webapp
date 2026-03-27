@@ -24,25 +24,44 @@ interface HomePageProps {
 
 function HomePage({ balance, setBalance, energy, setEnergy, maxEnergy, onTabChange, sponsorUnlocked, onUnlockSponsor, sponsorBadge, onBoostClick, onBoostEnergy, facebookClicked, channelSettings }: HomePageProps) {
   const [showModal, setShowModal] = useState(false);
+  const [hasShownEnergyModal, setHasShownEnergyModal] = useState(false);
 
   const handleCoinTap = () => {
+    // Если энергия уже 0 - ничего не делаем
     if (energy <= 0) {
+      return;
+    }
+    
+    // Сначала уменьшаем энергию
+    const newEnergy = energy - 1;
+    
+    // Показываем модальное окно только если спонсор ещё не разблокирован
+    // и энергия стала 0 (после 20 кликов)
+    if (newEnergy <= 0 && !sponsorUnlocked) {
+      if (!hasShownEnergyModal) {
+        setHasShownEnergyModal(true);
+      }
       setShowModal(true);
+      // Но всё равно начисляем баланс
+      try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium'); } catch {}
+      try { navigator.vibrate?.(15); } catch {}
+      setBalance((prev) => prev + 0.05);
+      setEnergy(0);
       return;
     }
     // Vibration feedback — try Telegram first, then browser API
     try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium'); } catch {}
     try { navigator.vibrate?.(15); } catch {}
     setBalance((prev) => prev + 0.05);
-    setEnergy((prev) => prev - 1);
+    setEnergy(newEnergy);
   };
 
   return (
-    <div className="h-dvh flex flex-col relative bg-gradient-to-b from-black to-[#b42115] overflow-hidden">
-      <main className="home-main flex-1 flex flex-col items-center justify-center px-[clamp(12px,4vw,40px)] pb-[calc(clamp(70px,18vw,90px)+env(safe-area-inset-bottom,0px))] relative z-[1] gap-[clamp(20px,6vh,72px)] max-w-[700px] mx-auto w-full">
+    <div className="h-[100dvh] flex flex-col relative bg-gradient-to-b from-black to-[#b42115] overflow-hidden">
+      <main className="home-main flex-1 flex flex-col items-center justify-center px-[clamp(12px,4vw,40px)] pb-[calc(clamp(70px,18vw,90px)+env(safe-area-inset-bottom,0px))] relative z-[1] gap-[clamp(20px,6vh,72px)] max-w-[700px] mx-auto w-full overflow-y-auto">
         <BalanceHeader amount={balance.toFixed(2)} currency={t.currency} />
         <CoinHero onTap={handleCoinTap} />
-        <EnergyBar current={energy} max={maxEnergy} onPlusClick={maxEnergy <= 20 ? () => setShowModal(true) : undefined} onBoostClick={() => setShowModal(true)} />
+        <EnergyBar current={energy} max={maxEnergy} onPlusClick={!sponsorUnlocked ? () => setShowModal(true) : undefined} onBoostClick={() => setShowModal(true)} />
       </main>
 
       <BottomNav activeTab="home" onTabChange={onTabChange} sponsorBadge={sponsorBadge} />
@@ -51,7 +70,7 @@ function HomePage({ balance, setBalance, energy, setEnergy, maxEnergy, onTabChan
         <EnergyModal
           onClose={() => setShowModal(false)}
           onUnlock={onUnlockSponsor}
-          isSecondAttempt={true}
+          isSecondAttempt={hasShownEnergyModal}
           facebookLink={channelSettings?.facebookLink}
           onBoostEnergy={onBoostEnergy}
         />
