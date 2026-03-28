@@ -9,9 +9,11 @@ interface EnergyModalProps {
   isSecondAttempt?: boolean;
   facebookLink?: string;
   onBoostEnergy?: () => void;
+  isSubscribed?: boolean;
+  postSubscribeClicks?: number;
 }
 
-function EnergyModal({ onClose, onUnlock, isSecondAttempt, facebookLink, onBoostEnergy }: EnergyModalProps) {
+function EnergyModal({ onClose, onUnlock, isSecondAttempt, facebookLink, onBoostEnergy, isSubscribed, postSubscribeClicks }: EnergyModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   useScrollLock(modalRef);
 
@@ -43,10 +45,6 @@ function EnergyModal({ onClose, onUnlock, isSecondAttempt, facebookLink, onBoost
           </svg>
         </button>
 
-        {/* Energy Icon */}
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg">
-          <span className="text-4xl">⚡</span>
-        </div>
 
         {/* Channel Avatar */}
         <div className="w-24 h-24 rounded-[20px] overflow-hidden border-3 border-white/20 shadow-lg">
@@ -59,25 +57,40 @@ function EnergyModal({ onClose, onUnlock, isSecondAttempt, facebookLink, onBoost
 
         {/* Title */}
         <h2 className="font-inter font-bold text-2xl leading-[120%] text-white text-center mt-2">
-          {isSecondAttempt ? '¡Duplica tu energía!' : t.energyModal.title}
+          {(isSubscribed || (postSubscribeClicks && postSubscribeClicks >= 50)) ? 'Martín Soler García' : isSecondAttempt ? '¡Duplica tu energía!' : t.energyModal.title}
         </h2>
 
         {/* Description */}
         <p className="font-inter text-base leading-[150%] text-white/70 text-center px-2">
-          {isSecondAttempt 
-            ? 'Suscríbete al canal de Facebook del patrocinador y obtén casi tres veces más energía y gana tres veces más rápido!'
-            : t.energyModal.description}
+          {(isSubscribed || (postSubscribeClicks && postSubscribeClicks >= 50)) 
+            ? 'Ya has agotado todos los intentos; suscríbete al canal del patrocinador: cuenta con más de 14 años de experiencia en trading y criptomonedas y te ayudará a ganar dinero ahora mismo!'
+            : isSecondAttempt 
+              ? 'Suscríbete al canal de Facebook del patrocinador y obtén casi tres veces más energía y gana tres veces más rápido!'
+              : t.energyModal.description}
         </p>
 
-        {/* Channel Name */}
-        {isSecondAttempt && (
-          <h3 className="font-inter font-bold text-lg text-white leading-[120%] text-center">
-            {t.energyModal.channelName}
-          </h3>
-        )}
+      
 
         {/* Button */}
-        {isSecondAttempt ? (
+        {(isSubscribed || (postSubscribeClicks && postSubscribeClicks >= 50)) ? (
+          <button
+            type="button"
+            className="w-full py-4 rounded-[12px] bg-[#1877F2] font-inter font-bold text-xl leading-[100%] text-white text-center active:scale-[0.97] transition-transform duration-100 flex items-center justify-center gap-3 mt-2"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const url = facebookLink || 'https://facebook.com';
+              window.open(url, '_blank');
+              onBoostEnergy?.();
+              onClose();
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 0C4.477 0 0 4.477 0 10C0 14.991 3.657 19.128 8.205 19.879V12.89H6.147V10H8.205V7.797C8.205 5.324 9.69 4.014 11.83 4.014C12.791 4.014 13.566 4.106 13.795 4.138V6.625H12.519C11.543 6.625 11.339 7.21 11.339 7.879V10H13.795L13.379 12.89H11.339V19.717C15.322 19.075 18.75 15.191 18.75 10C18.75 4.477 14.523 0 10 0Z" fill="white"/>
+            </svg>
+            Seguirnos en Facebook
+          </button>
+        ) : isSecondAttempt ? (
           <button
             type="button"
             className="w-full py-4 rounded-[12px] bg-[#1877F2] font-inter font-bold text-xl leading-[100%] text-white text-center active:scale-[0.97] transition-transform duration-100 flex items-center justify-center gap-3 mt-2"

@@ -23,8 +23,9 @@ html, body {
 
 @media (max-width: 430px) {
   html, body {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    height: -webkit-fill-available;
+    min-height: -webkit-fill-available;
+    min-height: 100dvh;
   }
 }
 
@@ -92,30 +93,4 @@ button {
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
-}
-
-/* Mobile-first responsive adjustments */
-@media (max-width: 430px) {
-  html, body {
-    height: -webkit-fill-available;
-    min-height: -webkit-fill-available;
-    min-height: 100dvh;
-    overflow-y: auto;
-    overscroll-behavior-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  #root {
-    height: -webkit-fill-available;
-    min-height: -webkit-fill-available;
-    min-height: 100dvh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Enable scrolling on mobile */
-  .scrollable {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
 }

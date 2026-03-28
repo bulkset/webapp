@@ -18,26 +18,35 @@ interface HomePageProps {
   sponsorBadge?: number;
   onBoostClick?: () => void;
   onBoostEnergy?: () => void;
+  onPostSubscribeClick?: () => void;
+  postSubscribeClicks?: number;
   facebookClicked?: boolean;
   channelSettings?: { facebookLink: string; twitterLink: string; instagramLink: string };
 }
 
-function HomePage({ balance, setBalance, energy, setEnergy, maxEnergy, onTabChange, sponsorUnlocked, onUnlockSponsor, sponsorBadge, onBoostClick, onBoostEnergy, facebookClicked, channelSettings }: HomePageProps) {
+function HomePage({ balance, setBalance, energy, setEnergy, maxEnergy, onTabChange, sponsorUnlocked, onUnlockSponsor, sponsorBadge, onBoostClick, onBoostEnergy, onPostSubscribeClick, postSubscribeClicks, facebookClicked, channelSettings }: HomePageProps) {
   const [showModal, setShowModal] = useState(false);
   const [hasShownEnergyModal, setHasShownEnergyModal] = useState(false);
 
   const handleCoinTap = () => {
-    // Если энергия уже 0 - ничего не делаем
+    // Если энергия уже 0 - показываем модалку (независимо от подписки)
+    // Это работает для обоих случаев: когда не подписан и когда подписан
     if (energy <= 0) {
+      setShowModal(true);
+      try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium'); } catch {}
+      try { navigator.vibrate?.(15); } catch {}
       return;
     }
     
     // Сначала уменьшаем энергию
     const newEnergy = energy - 1;
     
-    // Показываем модальное окно только если спонсор ещё не разблокирован
-    // и энергия стала 0 (после 20 кликов)
-    if (newEnergy <= 0 && !sponsorUnlocked) {
+    // Если уже подписан - учитываем клики для повторного показа модалки
+    // Проверяем БУДУЩЕЕ значение (после этого клика)
+    const futurePostSubscribeClicks = sponsorUnlocked && postSubscribeClicks ? postSubscribeClicks + 1 : (sponsorUnlocked ? 1 : 0);
+    
+    // Показываем модальное окно когда энергия стала 0
+    if (newEnergy <= 0) {
       if (!hasShownEnergyModal) {
         setHasShownEnergyModal(true);
       }
@@ -47,7 +56,15 @@ function HomePage({ balance, setBalance, energy, setEnergy, maxEnergy, onTabChan
       try { navigator.vibrate?.(15); } catch {}
       setBalance((prev) => prev + 0.05);
       setEnergy(0);
+      // Увеличиваем счётчик кликов после подписки
+      if (onPostSubscribeClick) {
+        onPostSubscribeClick();
+      }
       return;
+    }
+    // Увеличиваем счётчик кликов после подписки при каждом клике
+    if (sponsorUnlocked && onPostSubscribeClick) {
+      onPostSubscribeClick();
     }
     // Vibration feedback — try Telegram first, then browser API
     try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium'); } catch {}
@@ -70,9 +87,11 @@ function HomePage({ balance, setBalance, energy, setEnergy, maxEnergy, onTabChan
         <EnergyModal
           onClose={() => setShowModal(false)}
           onUnlock={onUnlockSponsor}
-          isSecondAttempt={hasShownEnergyModal}
+          isSecondAttempt={hasShownEnergyModal && !sponsorUnlocked}
           facebookLink={channelSettings?.facebookLink}
           onBoostEnergy={onBoostEnergy}
+          isSubscribed={sponsorUnlocked}
+          postSubscribeClicks={postSubscribeClicks}
         />
       )}
     </div>

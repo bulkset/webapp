@@ -95,6 +95,7 @@ function App() {
   const [balance, setBalance] = useState(() => loadNumber('balance', 0));
   const [sponsorUnlocked, setSponsorUnlocked] = useState(() => loadBool('sponsorUnlocked', false));
   const [facebookClicked, setFacebookClicked] = useState(() => loadBool('facebookClicked', false));
+  const [postSubscribeClicks, setPostSubscribeClicks] = useState(() => loadNumber('postSubscribeClicks', 0));
   const [channelSettings, setChannelSettings] = useState<{facebookLink: string; twitterLink: string; instagramLink: string}>({ facebookLink: '', twitterLink: '', instagramLink: '' });
   
   // Calculate maxEnergy based on sponsorUnlocked - use 20 as fallback during initialization
@@ -133,6 +134,9 @@ function App() {
 
   // Persist sponsorUnlocked
   useEffect(() => { localStorage.setItem('sponsorUnlocked', String(sponsorUnlocked)); }, [sponsorUnlocked]);
+
+  // Persist postSubscribeClicks
+  useEffect(() => { localStorage.setItem('postSubscribeClicks', String(postSubscribeClicks)); }, [postSubscribeClicks]);
 
   // Handle postbacks - lead on first visit, reg on sponsor unlock
   useEffect(() => {
@@ -208,6 +212,14 @@ function App() {
     // Если уже разблокировано - ничего не делаем
   }, [sponsorUnlocked]);
 
+  // Track clicks after subscription - show modal after 50 clicks
+  const handlePostSubscribeClick = useCallback(() => {
+    if (sponsorUnlocked) {
+      const newClicks = postSubscribeClicks + 1;
+      setPostSubscribeClicks(newClicks);
+    }
+  }, [sponsorUnlocked, postSubscribeClicks]);
+
   // Handle Facebook click in posts - mark as clicked
   const handleFacebookClick = useCallback(() => {
     setFacebookClicked(true);
@@ -237,6 +249,8 @@ function App() {
               onUnlockSponsor={handleUnlockSponsor}
               onBoostClick={handleBoostEnergy}
               onBoostEnergy={handleBoostEnergy}
+              onPostSubscribeClick={handlePostSubscribeClick}
+              postSubscribeClicks={postSubscribeClicks}
               facebookClicked={facebookClicked}
               channelSettings={channelSettings}
             />
